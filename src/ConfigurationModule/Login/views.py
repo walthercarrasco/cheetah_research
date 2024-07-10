@@ -28,9 +28,11 @@ def user_register(request):
 
 def user_login(request):
     if request.method == 'POST':
-        form = UserLoginForm(request.POST)
+        print("entered post")
+        form = UserLoginForm(request,  data=request.POST)
         if form.is_valid():
-            email = form.cleaned_data['email']
+            print("form is valid")
+            email = form.cleaned_data['username']
             password = form.cleaned_data['password']
             user = authenticate(email=email, password=password)
             if user is not None:
@@ -42,6 +44,7 @@ def user_login(request):
             else:
                 messages.error(request, 'Invalid credentials.')
     else:
+        print("form is invalid")
         form = UserLoginForm()
     return render(request, 'login.html', {'form': form})
 

@@ -8,4 +8,6 @@ class UserRegisterForm(UserCreationForm):
         fields = ['email', 'password1', 'password2']
 
 class UserLoginForm(AuthenticationForm):
-    username = forms.EmailField(label='Email', max_length=254)
+    class Meta:
+        model = User
+        fields = ['email', 'password']
