@@ -16,7 +16,9 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from createInterviewer import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('interviewer/', views.InterviewerListCreate.as_view(), name='interviewer_list_create'),
 ]
