@@ -3,5 +3,5 @@ from .views import createStudy
 
 
 urlpatterns = [
-    path('', createStudy, name='createStudy'),
+    path('createStudy/', createStudy, name='createStudy'),
 ]
