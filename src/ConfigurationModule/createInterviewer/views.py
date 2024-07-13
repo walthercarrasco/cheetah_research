@@ -25,7 +25,7 @@ def createInterviewer(request):
             'interviewerTone':body.get('interviewerTone'),
             'interviewerGreeting':body.get('interviewerGreeting'),
             'importantObservation':body.get('importantObservation'),
-            'surveyId':body.get('surveyId')
+            'studyId':body.get('studyId')
         }
         post = db['Interviewer'].insert_one(data)
         
