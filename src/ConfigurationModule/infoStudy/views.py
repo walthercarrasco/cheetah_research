@@ -34,14 +34,6 @@ def info_study(request, study_id):
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Database error.'}, status=500)
     
-    
-from bson import ObjectId
-import json
-import urllib.request
-import pymongo
-from django.http import JsonResponse
-from django.views.decorators.csrf import csrf_exempt
-
 @csrf_exempt
 def setStatus(request, study_id):
     try:
