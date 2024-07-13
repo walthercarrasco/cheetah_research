@@ -9,11 +9,11 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 import environ
 from pymongo import MongoClient
-
+from django.contrib.messages import constants as messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -61,7 +61,7 @@ ROOT_URLCONF = 'ConfigurationModule.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -141,3 +141,30 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'Login.User'
 
+AUTHENTICATION_BACKENDS = [
+    'Login.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR.parent.parent, 'static')
+]
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
+
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.mailgun.org'
+EMAIL_HOST_USER = env.read_env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env.read_env('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = env.read_env('EMAIL_PORT')
+EMAIL_USE_TLS = env.read_env('EMAIL_USE_TLS')
+DEFAULT_FROM_EMAIL = 'cheetahresearch0201@gmail.com'

@@ -21,8 +21,5 @@ from createInterviewer import views
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('register/', views.user_register, name='register'),
-    path('login/', views.user_login, name='login'),
-    path('home/', views.home, name='home'),
-    path('interviewer/', views.InterviewerListCreate.as_view(), name='interviewer_list_create'),
+    path('', include('Login.urls'))
 ]
