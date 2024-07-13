@@ -11,7 +11,7 @@ import json
 db = settings.MONGO_DB
 
 # Create your views here.
-def getDate(request, study_id):
+def info_study(request, study_id):
     try:
         # Convert study_id to ObjectId
         study_oid = ObjectId(study_id)
@@ -28,7 +28,7 @@ def getDate(request, study_id):
         # Return the study date
         return JsonResponse({
             'status': 'success',
-            'study_date': study.get('studyDate'),
+            'studyDate': study.get('studyDate'),
             'studyStatus': study.get('studyStatus')
         })
     except pymongo.errors.PyMongoError as e:
