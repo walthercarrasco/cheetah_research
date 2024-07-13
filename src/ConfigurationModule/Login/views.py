@@ -54,9 +54,12 @@ def user_login(request):
     return render(request, 'registration/login.html', {'form': form})
 
 def user_logout(request):
-    logout(request)
-    messages.success(request, 'You have successfully logged out.')
-    return redirect('user_login')
+    if request.method == 'POST':
+        logout(request)
+        messages.success(request, 'You have successfully logged out.')
+        return redirect('user_login')
+    else:
+        return render(request, 'base.html')
 
 def password_reset_request(request):
     if request.method == 'POST':
