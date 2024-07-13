@@ -44,6 +44,10 @@ INSTALLED_APPS = [
     'createInterviewer',
     'rest_framework',
     'Login',
+    'createInterviewer',
+    'createQuestion',
+    'createStudy',
+    'infoStudy',
 ]
 
 MIDDLEWARE = [
@@ -92,10 +96,10 @@ DATABASES = {
 
 }
 
-##MONGO_URI=env('MONGO_URI')
-##MONGO_DATABASE=env('MONGO_DATABASE')
-##client = MongoClient(MONGO_URI)
-##db = client[MONGO_DATABASE]
+MONGO_URI=env('MONGO_URI')
+MONGO_DATABASE=env('MONGO_DATABASE')
+client = MongoClient(MONGO_URI)
+MONGO_DB = client[MONGO_DATABASE]   
 
 
 # Password validation

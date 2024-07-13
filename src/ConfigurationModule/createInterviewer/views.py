@@ -7,7 +7,7 @@ from google.cloud import storage
 
 import os
 db = settings.MONGO_DB
-bucket = storage.Client().get_bucket('cactusbucket')
+bucket = storage.Client().get_bucket('bucket_cheetah')
 
 @csrf_exempt
 def createInterviewer(request):
@@ -16,7 +16,8 @@ def createInterviewer(request):
         filename = None
         if(request.FILES):
             image_file = request.FILES['interviewerProfilePicture']
-            filename = f'pfp/{body.get('surveyId')}/'+image_file.name
+            studyId = body.get('studyId')
+            filename = f'pfp/{studyId}/'+image_file.name
             blob = bucket.blob(filename)
             blob.upload_from_file(image_file)
         data = {
