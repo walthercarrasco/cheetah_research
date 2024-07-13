@@ -9,7 +9,8 @@ from django.contrib import messages
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
-
+from anymail.message import AnymailMessage
+from django.utils.html import strip_tags
 
 from .models import User
 
@@ -81,18 +82,22 @@ def password_reset_request(request):
                     'protocol': 'http',
                 }
                 email_body = render_to_string(email_template_name, c)
+                text_content = strip_tags(email_body)
+                message = AnymailMessage(
+                    subject=subject,
+                    body=text_content,
+                    from_email= 'cheetahresearch0201@gmail.com',
+                    to=[user.email],
+                )
+                message.attach_alternative(email_body, "text/html")
                 print(email_body)
                 try:
-                    send_mail(
-                        subject,
-                        email_body,
-                        'cheetahresearch0201@gmail.com',
-                        [user.email],
-                        fail_silently=False)
+                    message.send()
                 except Exception as e:
                     print(e)
                     return HttpResponse(f'Invalid header found: {e}')
-                return redirect("password_reset_confirm.html")
+                messages.success(request, 'An email has been sent to you with password reset instructions.')
+                return render(request, 'registration/forgot-password.html', {'form': form})
     else:
         form = PasswordResetRequestForm()
     return render(request, 'registration/forgot-password.html', {'form': form})
@@ -112,7 +117,7 @@ def password_reset_confirm(request, uidb64=None, token=None):
                 return redirect('user_login')
         else:
             form = SetPasswordForm2(user)
-        return render(request, 'registration/forgot-password.html', {'form': form})
+        return render(request, 'registration/password_reset_confirm.html', {'form': form})
     else:
         messages.error(request, 'The reset password link is no longer valid.')
         return redirect('user_login')
