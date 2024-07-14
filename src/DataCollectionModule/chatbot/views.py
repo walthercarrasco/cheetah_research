@@ -16,9 +16,6 @@ genai.configure(api_key=GEMINI_API_KEY)
 
 model = genai.GenerativeModel('gemini-1.5-pro')
 chat = model.start_chat(history=[])
-chat.send_message('Recibiras mensajes de forma "pregunta: respuesta", enviaras preguntas de seguimiento'+
-                  'para recolectarmas informacion si la respuesta recibida no es clara. Con una respuesta clara. '+
-                  'enviaras "LISTO" para continuar con la siguiente pregunta.')
 
 @csrf_exempt
 def start(request):
