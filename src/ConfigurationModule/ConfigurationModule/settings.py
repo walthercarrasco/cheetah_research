@@ -29,7 +29,7 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
-ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = []
 
 
 # Application definition
@@ -42,12 +42,8 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    'rest_framework.authtoken',
     'Login',
-    'createQuestion',
-    'createStudy',
-    'infoStudy',
-    'createInterviewer',
-    'anymail',
 ]
 
 MIDDLEWARE = [
@@ -96,10 +92,10 @@ DATABASES = {
 
 }
 
-MONGO_URI=env('MONGO_URI')
+MONGO_DB = env('MONGO_URI')
 MONGO_DATABASE=env('MONGO_DATABASE')
-client = MongoClient(MONGO_URI)
-MONGO_DB = client[MONGO_DATABASE]   
+client = MongoClient(MONGO_DB)
+db = client[MONGO_DATABASE]
 
 
 # Password validation
@@ -161,12 +157,23 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
-LOGIN_REDIRECT_URL = ''
-LOGOUT_REDIRECT_URL = ''
-DEFAULT_FROM_EMAIL = env.read_env('DEFAULT_FROM_EMAIL')
+LOGIN_REDIRECT_URL = 'home'
+LOGOUT_REDIRECT_URL = 'home'
 
-ANYMAIL = {
-    "MAILGUN_API_KEY": env.read_env('MAILGUN_API_KEY'),
-    "MAILGUN_SENDER_DOMAIN": env.read_env('MAILGUN_SENDER_DOMAIN'),
+
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.mailgun.org'
+EMAIL_HOST_USER = env.read_env('EMAIL_HOST_USER')
+EMAIL_HOST_PASSWORD = env.read_env('EMAIL_HOST_PASSWORD')
+EMAIL_PORT = env.read_env('EMAIL_PORT')
+EMAIL_USE_TLS = env.read_env('EMAIL_USE_TLS')
+DEFAULT_FROM_EMAIL = 'cheetahresearch0201@gmail.com'
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
 }
-EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
