@@ -25,5 +25,6 @@ urlpatterns = [
     path('', include('infoStudy.urls'), name='infoStudy'),
     path('', include('createQuestion.urls'), name='createQuestions'),
     path('addInterviewer/', createInterviewer, name='createInterviewer'),
-    path('getInterviewer/', getInterviewer, name='getInterviewer')
+    path('getInterviewer/', getInterviewer, name='getInterviewer'),
+    path('', include('list_studies.urls'), name='list_studies'),
 ]
