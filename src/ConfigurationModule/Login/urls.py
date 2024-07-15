@@ -1,13 +1,14 @@
-from django.contrib import admin
-from django.urls import path, include
-from django.contrib.auth import views as auth_views
+# urls.py
+from django.urls import path
+from rest_framework.authtoken.views import obtain_auth_token
 from . import views
 
 urlpatterns = [
     path('login/', views.user_login, name='user_login'),
+    path('logout/', views.user_logout, name='user_logout'),
     path('home/', views.home, name='home'),
     path('register/', views.user_register, name='user_register'),
-    path('register/password-reset', views.password_reset_request, name='password_reset'),
+    path('password-reset/', views.password_reset_request, name='password_reset'),
     path('password-reset-confirm/<uidb64>/<token>/', views.password_reset_confirm, name='password_reset_confirm'),
-    path('', views.user_logout, name='user_logout'),
+    path('api-token-auth/', obtain_auth_token, name='api_token_auth'),
 ]

@@ -1,130 +1,113 @@
-from django.contrib.auth.tokens import default_token_generator
+#Login/views.py
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.response import Response
+from rest_framework.authtoken.models import Token
+from django.contrib.auth import authenticate, login, logout
 from django.contrib.sites.shortcuts import get_current_site
-from django.core.mail import send_mail
-from django.http import HttpResponse
-from django.shortcuts import render, redirect
-from django.contrib.auth import login, authenticate, logout
-from django.contrib.auth.decorators import login_required
-from django.contrib import messages
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
 from anymail.message import AnymailMessage
-from django.utils.html import strip_tags
-
+from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, PasswordResetRequestSerializer, SetPasswordSerializer
 from .models import User
 
-from .forms import UserRegisterForm, UserLoginForm, PasswordResetRequestForm, SetPasswordForm2
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def user_register(request):
-    if request.method == 'POST':
-        form = UserRegisterForm(request.POST)
-        if form.is_valid():
-            user = form.save(commit=False)
-            user.is_active = False
-            user.save()
-            messages.info(request, 'Your account has been created and is awaiting approval.')
-            return redirect('user_login')
-        else:
-            messages.error(request, 'There was an error creating your account.')
-    else:
-        form = UserRegisterForm()
-    return render(request, 'registration/register.html', {'form': form})
+    serializer = UserRegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        serializer.save()
+        return Response({'message': 'Your account has been created and is awaiting approval.'}, status=status.HTTP_201_CREATED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+@api_view(['POST'])
+@permission_classes([AllowAny])
 def user_login(request):
-    if request.method == 'POST':
-        form = UserLoginForm(request,  data=request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['username']
-            password = form.cleaned_data['password']
-            user = authenticate(email=email, password=password)
-            if user is not None:
-                if user.is_active:
-                    login(request, user)
-                    messages.success(request, 'You have successfully logged in.')
-                    return redirect('home')
-                else:
-                    messages.error(request, 'Your account is awaiting approval.')
+    serializer = UserLoginSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        password = serializer.validated_data['password']
+        user = authenticate(request, email=email, password=password)
+        if user is not None:
+            if user.is_active:
+                login(request, user)
+                token, created = Token.objects.get_or_create(user=user)
+                return Response({'token': token.key}, status=status.HTTP_200_OK)
             else:
-                messages.error(request, 'Invalid credentials.')
+                return Response({'error': 'Your account is awaiting approval.'}, status=status.HTTP_403_FORBIDDEN)
+        else:
+            return Response({'error': 'Invalid credentials.'}, status=status.HTTP_401_UNAUTHORIZED)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
-    else:
-        form = UserLoginForm()
-    return render(request, 'registration/login.html', {'form': form})
-
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
 def user_logout(request):
-    if request.method == 'POST':
-        logout(request)
-        messages.success(request, 'You have successfully logged out.')
-        return redirect('user_login')
-    else:
-        return render(request, 'base.html')
+    try:
+        token = request.auth
+        token.delete()
+    except Token.DoesNotExist:
+        pass
+    logout(request)
 
+    return Response({'message': 'You have successfully logged out.'}, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
 def password_reset_request(request):
-    if request.method == 'POST':
-        form = PasswordResetRequestForm(request.POST)
-        if form.is_valid():
-            email = form.cleaned_data['email']
-            user = User.objects.filter(email=email).first()
-            if user is not None:
-                subject = 'Password Reset Requested'
-                email_template_name = 'registration/password_reset_email.html'
+    serializer = PasswordResetRequestSerializer(data=request.data)
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        user = User.objects.filter(email=email).first()
+        if user is not None:
+            subject = 'Password Reset Requested'
+            email_template_name = 'registration/password_reset_email.html'
+            c = {
+                'email': user.email,
+                'domain': get_current_site(request).domain,
+                'site_name': 'Los Pixies',
+                'uid': urlsafe_base64_encode(force_bytes(user.pk)),
+                'user': user,
+                'token': default_token_generator.make_token(user),
+                'protocol': 'http',
+            }
+            email_body = render_to_string(email_template_name, c)
+            text_content = strip_tags(email_body)
+            message = AnymailMessage(
+                subject=subject,
+                body=text_content,
+                from_email= 'cheetahresearch0201@gmail.com',
+                to=[user.email],
+            )
+            message.attach_alternative(email_body, "text/html")
+            try:
+                message.send()
+            except Exception as e:
+                return Response({'error': f'Invalid header found: {e}'}, status=status.HTTP_400_BAD_REQUEST)
+            return Response({'message': 'An email has been sent to you with password reset instructions.'}, status=status.HTTP_200_OK)
+        return Response({'error': 'An account with this email does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-                c = {
-                    'email': user.email,
-                    'domain': get_current_site(request).domain,
-                    'site_name': 'Los Pixies',
-                    'uid': urlsafe_base64_encode(force_bytes(user.pk)),
-                    'user': user,
-                    'token': default_token_generator.make_token(user),
-                    'protocol': 'http',
-                }
-                email_body = render_to_string(email_template_name, c)
-                text_content = strip_tags(email_body)
-                message = AnymailMessage(
-                    subject=subject,
-                    body=text_content,
-                    from_email= 'cheetahresearch0201@gmail.com',
-                    to=[user.email],
-                )
-                message.attach_alternative(email_body, "text/html")
-                print(email_body)
-                try:
-                    message.send()
-                except Exception as e:
-                    print(e)
-                    return HttpResponse(f'Invalid header found: {e}')
-                messages.success(request, 'An email has been sent to you with password reset instructions.')
-                return render(request, 'registration/forgot-password.html', {'form': form})
-    else:
-        form = PasswordResetRequestForm()
-    return render(request, 'registration/forgot-password.html', {'form': form})
-
+@api_view(['POST'])
 def password_reset_confirm(request, uidb64=None, token=None):
     try:
-        uid= force_str(urlsafe_base64_decode(uidb64))
+        uid = force_str(urlsafe_base64_decode(uidb64))
         user = User.objects.get(pk=uid)
     except(TypeError, ValueError, OverflowError, User.DoesNotExist):
         user = None
     if user is not None and default_token_generator.check_token(user, token):
-        if request.method == 'POST':
-            form = SetPasswordForm2(user, request.POST)
-            if form.is_valid():
-                form.save()
-                messages.success(request, 'Password has been reset.')
-                return redirect('user_login')
-        else:
-            form = SetPasswordForm2(user)
-        return render(request, 'registration/password_reset_confirm.html', {'form': form})
-    else:
-        messages.error(request, 'The reset password link is no longer valid.')
-        return redirect('user_login')
+        serializer = SetPasswordSerializer(data=request.data)
+        if serializer.is_valid():
+            if serializer.validated_data['new_password1'] != serializer.validated_data['new_password2']:
+                return Response({'error': 'Passwords do not match.'}, status=status.HTTP_400_BAD_REQUEST)
+            user.set_password(serializer.validated_data['new_password1'])
+            user.save()
+            return Response({'message': 'Password has been reset.'}, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    return Response({'error': 'The reset password link is no longer valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
-
-
-
-@login_required
+@api_view(['GET'])
+@permission_classes(['IsAuthenticated'])
 def home(request):
-    return render(request, 'home.html')
+    return Response({'message': 'Welcome to the home page!'}, status=status.HTTP_200_OK)
