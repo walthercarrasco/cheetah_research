@@ -1,4 +1,5 @@
 #Login/views.py
+from django.utils.html import strip_tags
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
@@ -20,7 +21,12 @@ def user_register(request):
     serializer = UserRegisterSerializer(data=request.data)
     if serializer.is_valid():
         serializer.save()
-        return Response({'message': 'Your account has been created and is awaiting approval.'}, status=status.HTTP_201_CREATED)
+        user = User.objects.get(email=serializer.validated_data['email'])
+        user.set_password(serializer.validated_data['password1'])
+        user.save()
+        token = Token.objects.create(user=user)
+        return Response({'message': 'Your account has been created and is awaiting approval.',
+                         'token': token.key, "user": serializer.data}, status=status.HTTP_201_CREATED)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
@@ -45,16 +51,18 @@ def user_login(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def user_logout(request):
-    try:
-        token = request.auth
-        token.delete()
-    except Token.DoesNotExist:
-        pass
+    token = request.auth
+    if token:
+        try:
+            token.delete()
+        except Token.DoesNotExist:
+            pass
     logout(request)
-
     return Response({'message': 'You have successfully logged out.'}, status=status.HTTP_200_OK)
 
+
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def password_reset_request(request):
     serializer = PasswordResetRequestSerializer(data=request.data)
     if serializer.is_valid():
@@ -62,10 +70,10 @@ def password_reset_request(request):
         user = User.objects.filter(email=email).first()
         if user is not None:
             subject = 'Password Reset Requested'
-            email_template_name = 'registration/password_reset_email.html'
+            email_template_name = 'password_reset_email.html'
             c = {
                 'email': user.email,
-                'domain': get_current_site(request).domain,
+                'domain': '127.0.0.1:8000/',
                 'site_name': 'Los Pixies',
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'user': user,
@@ -90,6 +98,7 @@ def password_reset_request(request):
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['POST'])
+@permission_classes([AllowAny])
 def password_reset_confirm(request, uidb64=None, token=None):
     try:
         uid = force_str(urlsafe_base64_decode(uidb64))
