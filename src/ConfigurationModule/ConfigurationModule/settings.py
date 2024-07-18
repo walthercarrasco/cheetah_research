@@ -53,13 +53,10 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
     'Login',
     'corsheaders',
-    'Login',
     'createQuestion',
     'createStudy',
     'infoStudy',
     'createInterviewer',
-    'anymail',
-    'corsheaders',
     'list_studies',
 
 ]
