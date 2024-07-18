@@ -29,8 +29,12 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
+
 ALLOWED_HOSTS = []
 STATIC_URL = '/static/'
+ALLOWED_HOSTS = ['*']
+GEMINI_API_KEY = env('GEMINI_API_KEY')
+
 
 # Application definition
 
@@ -49,6 +53,15 @@ INSTALLED_APPS = [
     'dj_rest_auth.registration',
     'Login',
     'corsheaders',
+    'Login',
+    'createQuestion',
+    'createStudy',
+    'infoStudy',
+    'createInterviewer',
+    'anymail',
+    'corsheaders',
+    'list_studies',
+
 ]
 SITE_ID = 1
 
@@ -61,6 +74,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
 ]
 CORS_ALLOWED_ORIGINS = [
     'http://localhost:63343',
@@ -103,10 +117,10 @@ DATABASES = {
 
 }
 
-MONGO_DB = env('MONGO_URI')
+MONGO_URI=env('MONGO_URI')
 MONGO_DATABASE=env('MONGO_DATABASE')
-client = MongoClient(MONGO_DB)
-db = client[MONGO_DATABASE]
+client = MongoClient(MONGO_URI)
+MONGO_DB = client[MONGO_DATABASE]   
 
 
 # Password validation
@@ -169,6 +183,7 @@ MESSAGE_TAGS = {
 LOGIN_REDIRECT_URL = ''
 LOGOUT_REDIRECT_URL = ''
 
+
 ANYMAIL = {
     "MAILGUN_API_KEY": env('MAILGUN_API_KEY'),
     "MAILGUN_SENDER_DOMAIN": env('MAILGUN_SENDER_DOMAIN'),
@@ -185,3 +200,5 @@ REST_FRAMEWORK = {
         'rest_framework.permissions.IsAuthenticated',
     ],
 }
+
+CORS_ALLOW_ALL_ORIGINS = True
