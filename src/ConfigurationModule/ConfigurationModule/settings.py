@@ -9,11 +9,11 @@ https://docs.djangoproject.com/en/5.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.0/ref/settings/
 """
-
+import os
 from pathlib import Path
 import environ
 from pymongo import MongoClient
-
+from django.contrib.messages import constants as messages
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -29,7 +29,11 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
+
 ALLOWED_HOSTS = []
+STATIC_URL = '/static/'
+ALLOWED_HOSTS = ['*']
+GEMINI_API_KEY = env('GEMINI_API_KEY')
 
 
 # Application definition
@@ -41,18 +45,37 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
     'rest_framework',
+    'rest_framework.authtoken',
+    'anymail',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
     'Login',
+    'corsheaders',
+    'createQuestion',
+    'createStudy',
+    'infoStudy',
+    'createInterviewer',
+    'list_studies',
+
 ]
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:63343',
+    'http://127.0.0.1:8000',
 ]
 
 ROOT_URLCONF = 'ConfigurationModule.urls'
@@ -60,7 +83,7 @@ ROOT_URLCONF = 'ConfigurationModule.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [os.path.join(BASE_DIR, 'templates')],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -91,10 +114,10 @@ DATABASES = {
 
 }
 
-##MONGO_URI=env('MONGO_URI')
-##MONGO_DATABASE=env('MONGO_DATABASE')
-##client = MongoClient(MONGO_URI)
-##db = client[MONGO_DATABASE]
+MONGO_URI=env('MONGO_URI')
+MONGO_DATABASE=env('MONGO_DATABASE')
+client = MongoClient(MONGO_URI)
+MONGO_DB = client[MONGO_DATABASE]   
 
 
 # Password validation
@@ -131,7 +154,7 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
@@ -140,3 +163,39 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 AUTH_USER_MODEL = 'Login.User'
 
+AUTHENTICATION_BACKENDS = [
+    'Login.backends.EmailBackend',
+    'django.contrib.auth.backends.ModelBackend',
+]
+
+
+
+MESSAGE_TAGS = {
+    messages.DEBUG: 'debug',
+    messages.INFO: 'info',
+    messages.SUCCESS: 'success',
+    messages.WARNING: 'warning',
+    messages.ERROR: 'danger',
+}
+LOGIN_REDIRECT_URL = ''
+LOGOUT_REDIRECT_URL = ''
+
+
+ANYMAIL = {
+    "MAILGUN_API_KEY": env('MAILGUN_API_KEY'),
+    "MAILGUN_SENDER_DOMAIN": env('MAILGUN_SENDER_DOMAIN'),
+}
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+CORS_ALLOW_ALL_ORIGINS = True

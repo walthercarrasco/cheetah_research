@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class CreatequestionConfig(AppConfig):
+class CreateinterviewerConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'createQuestion'
+    name = 'createInterviewer'
