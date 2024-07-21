@@ -22,7 +22,7 @@ from createInterviewer.views import createInterviewer, getInterviewer
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('', include('Login.urls'))
+    path('', include('Login.urls')),
     path('addInterviewer/', createInterviewer, name='createInterviewer'),
     path('getInterviewer/', getInterviewer, name='getInterviewer')
 ]
