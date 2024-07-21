@@ -42,8 +42,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'createInterviewer',
-    'rest_framework',
-    'Login',
+    'rest_framework'
 ]
 
 MIDDLEWARE = [
@@ -79,18 +78,6 @@ WSGI_APPLICATION = 'ConfigurationModule.wsgi.application'
 
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
-
-DATABASES = {
-    'default' : {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': env('NAME_DBPOSTGRE'),
-        'USER': env('USER_DBPOSTGRE'),
-        'PASSWORD': env('PASSWORD_DBPOSTGRE'),
-        'HOST': env('HOST_DBPOSTGRE'),
-        'PORT': env('PORT_DBPOSTGRE'),
-    }
-
-}
 
 ##MONGO_URI=env('MONGO_URI')
 ##MONGO_DATABASE=env('MONGO_DATABASE')
@@ -139,5 +126,13 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-AUTH_USER_MODEL = 'Login.User'
 
+MONGO_URI=env('MONGO_URI')
+MONGO_DATABASE=env('MONGO_DATABASE')
+client = MongoClient(MONGO_URI)
+MONGO_DB = client[MONGO_DATABASE]
+
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+BUCKET_URL = env('BUCKET_URL')
+BUCKET_NAME = env('BUCKET_NAME') 
