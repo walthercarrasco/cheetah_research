@@ -29,7 +29,11 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env('DEBUG')
 
+
 ALLOWED_HOSTS = []
+STATIC_URL = '/static/'
+ALLOWED_HOSTS = ['*']
+GEMINI_API_KEY = env('GEMINI_API_KEY')
 
 
 # Application definition
@@ -41,18 +45,37 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'django.contrib.sites',
+    'rest_framework',
+    'rest_framework.authtoken',
+    'anymail',
+    'dj_rest_auth',
+    'dj_rest_auth.registration',
+    'Login',
+    'corsheaders',
+    'createQuestion',
+    'createStudy',
+    'infoStudy',
     'createInterviewer',
-    'rest_framework'
+    'list_studies',
+
 ]
+SITE_ID = 1
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
+]
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:63343',
+    'http://127.0.0.1:8000',
 ]
 
 ROOT_URLCONF = 'ConfigurationModule.urls'
@@ -79,10 +102,22 @@ WSGI_APPLICATION = 'ConfigurationModule.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-##MONGO_URI=env('MONGO_URI')
-##MONGO_DATABASE=env('MONGO_DATABASE')
-##client = MongoClient(MONGO_URI)
-##db = client[MONGO_DATABASE]
+DATABASES = {
+    'default' : {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': env('NAME_DBPOSTGRE'),
+        'USER': env('USER_DBPOSTGRE'),
+        'PASSWORD': env('PASSWORD_DBPOSTGRE'),
+        'HOST': env('HOST_DBPOSTGRE'),
+        'PORT': env('PORT_DBPOSTGRE'),
+    }
+
+}
+
+MONGO_URI=env('MONGO_URI')
+MONGO_DATABASE=env('MONGO_DATABASE')
+client = MongoClient(MONGO_URI)
+MONGO_DB = client[MONGO_DATABASE]   
 
 
 # Password validation
@@ -119,32 +154,22 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
-STATIC_URL = 'static/'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+AUTH_USER_MODEL = 'Login.User'
 
-MONGO_URI=env('MONGO_URI')
-MONGO_DATABASE=env('MONGO_DATABASE')
-client = MongoClient(MONGO_URI)
-MONGO_DB = client[MONGO_DATABASE]
-
-AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
-AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
-BUCKET_URL = env('BUCKET_URL')
-BUCKET_NAME = env('BUCKET_NAME') 
 AUTHENTICATION_BACKENDS = [
     'Login.backends.EmailBackend',
     'django.contrib.auth.backends.ModelBackend',
 ]
 
 
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR.parent.parent, 'static')
-]
+
 MESSAGE_TAGS = {
     messages.DEBUG: 'debug',
     messages.INFO: 'info',
@@ -152,14 +177,25 @@ MESSAGE_TAGS = {
     messages.WARNING: 'warning',
     messages.ERROR: 'danger',
 }
-LOGIN_REDIRECT_URL = 'home'
-LOGOUT_REDIRECT_URL = 'home'
+LOGIN_REDIRECT_URL = ''
+LOGOUT_REDIRECT_URL = ''
 
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.mailgun.org'
-EMAIL_HOST_USER = env.read_env('EMAIL_HOST_USER')
-EMAIL_HOST_PASSWORD = env.read_env('EMAIL_HOST_PASSWORD')
-EMAIL_PORT = env.read_env('EMAIL_PORT')
-EMAIL_USE_TLS = env.read_env('EMAIL_USE_TLS')
-DEFAULT_FROM_EMAIL = 'cheetahresearch0201@gmail.com'
+ANYMAIL = {
+    "MAILGUN_API_KEY": env('MAILGUN_API_KEY'),
+    "MAILGUN_SENDER_DOMAIN": env('MAILGUN_SENDER_DOMAIN'),
+}
+EMAIL_BACKEND = "anymail.backends.mailgun.EmailBackend"
+DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL')
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.SessionAuthentication',
+        'rest_framework.authentication.TokenAuthentication',
+    ],
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.IsAuthenticated',
+    ],
+}
+
+CORS_ALLOW_ALL_ORIGINS = True

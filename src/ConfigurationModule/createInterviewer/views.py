@@ -57,4 +57,3 @@ def getInterviewer(request):
                     'study_id': interviewer['study_id']
                 })
     return JsonResponse({'error': 'Invalid request method'})
-

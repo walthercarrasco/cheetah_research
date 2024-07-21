@@ -1,6 +1,6 @@
 from django.apps import AppConfig
 
 
-class CreateinterviewerConfig(AppConfig):
+class InfostudyConfig(AppConfig):
     default_auto_field = 'django.db.models.BigAutoField'
-    name = 'createInterviewer'
+    name = 'infoStudy'
