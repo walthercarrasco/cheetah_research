@@ -16,11 +16,13 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from Login import views
 from createInterviewer.views import createInterviewer, getInterviewer
 
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('', include('Login.urls'))
     path('addInterviewer/', createInterviewer, name='createInterviewer'),
     path('getInterviewer/', getInterviewer, name='getInterviewer')
 ]
