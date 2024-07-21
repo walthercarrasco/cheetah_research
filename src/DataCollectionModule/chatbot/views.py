@@ -7,7 +7,9 @@ from rest_framework.response import Response
 import google.generativeai as genai
 from google.cloud import storage
 from bson import ObjectId
+from io import BytesIO
 import boto3
+import json
 
 GEMINI_API_KEY = settings.GEMINI_API_KEY
 db = settings.MONGO_DB 
@@ -34,21 +36,44 @@ def start(request):
         
         #Get questions from study
         questions = study['questions']
-        list = []
-        for q in questions:
-            list.append(q['question'])
-       
+        
+        #Select questions to send to chatbot
+        selected_questions = []
+        for question in questions:
+            if "feedback_questions" in question:
+                selected_questions.append(
+                    {
+                        "question": question["question"],
+                        "feedback_questions": [fb_question for fb_question in question["feedback_questions"]]
+                    }
+                )
+            else:
+                selected_questions.append(
+                    {
+                        "question": question["question"]
+                    }
+                )
+        print('-------------------')
+        print(selected_questions)
+        print('-------------------')
         
         #Send instructions to chatbot
         prompt = study['prompt']
+        json_data = json.dumps(selected_questions, indent=4)
+
         chat = model.start_chat(history=[])
-        #instructions = 'Recibiras mensajes de forma "pregunta: respuesta", enviaras preguntas de seguimiento para recolectarmas informacion si la respuesta recibida no es clara. Con una respuesta clara. Enviaras "LISTO" para continuar con la siguiente pregunta.'
-        final = prompt
-        response = chat.send_message(final)
-        print(response)
-        print(hash(chat))
-        send = {"content":questions,
-                "hash": hash(chat)}
+        response = chat.send_message(prompt + "Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
+                          + json_data 
+                          + "\nSos un encuestador. A partir de las preguntas recolecta información. Si una pregunta principal tiene "
+                          + "\"feedback_questions\" debes hacer esas preguntas inmediatamente después de la pregunta principal." 
+                          + "Si una respuesta a las preguntas principales no es clara, hace tus propias preguntas de seguimiento" 
+                          + "hasta tener respuestas satisfactorias. No haras preguntas de seguimiento a las \"feedback_questions\"."
+                          + "Si la respuesta es clara, continua con la siguiente pregunta. Solamente enviaras preguntas en tus mensajes, "
+                          + "no vas a insinuar respuestas para que el usuario conteste. Comenza con la primera pregunta")
+
+        send = {"content":json_data,
+                "hash": hash(chat),
+                "response": response.text}
         chats[hash(chat)]=chat
         return JsonResponse(send)
     return Response({'error': 'Invalid request method'})
@@ -57,7 +82,7 @@ def start(request):
 def communicate(request):
     if request.method == 'POST':
         prompt = request.POST.get('prompt')
-        index = request.POST.get('index')
+        index = request.POST.get('hash')
         response = (chats[int(index)]).send_message(prompt)
         return JsonResponse({'response': response.text})
     return JsonResponse({'error': 'Invalid request method'})
