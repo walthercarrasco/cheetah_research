@@ -7,15 +7,17 @@ from rest_framework.response import Response
 import google.generativeai as genai
 from google.cloud import storage
 from bson import ObjectId
-import json
+import boto3
 
 GEMINI_API_KEY = settings.GEMINI_API_KEY
 db = settings.MONGO_DB 
+s3 = boto3.client('s3')
+
 bucket = storage.Client().get_bucket('cactusbucket')
 genai.configure(api_key=GEMINI_API_KEY)
 
 model = genai.GenerativeModel('gemini-1.5-pro')
-chat = model.start_chat(history=[])
+chats = {}
 
 @csrf_exempt
 def start(request):
@@ -35,13 +37,19 @@ def start(request):
         list = []
         for q in questions:
             list.append(q['question'])
-        send = {"questions": list}
+       
         
         #Send instructions to chatbot
         prompt = study['prompt']
-        instructions = 'Recibiras mensajes de forma "pregunta: respuesta", enviaras preguntas de seguimiento para recolectarmas informacion si la respuesta recibida no es clara. Con una respuesta clara. Enviaras "LISTO" para continuar con la siguiente pregunta.'
-        final = prompt + '\n' + instructions
-        chat.send_message(final)
+        chat = model.start_chat(history=[])
+        #instructions = 'Recibiras mensajes de forma "pregunta: respuesta", enviaras preguntas de seguimiento para recolectarmas informacion si la respuesta recibida no es clara. Con una respuesta clara. Enviaras "LISTO" para continuar con la siguiente pregunta.'
+        final = prompt
+        response = chat.send_message(final)
+        print(response)
+        print(hash(chat))
+        send = {"content":questions,
+                "hash": hash(chat)}
+        chats[hash(chat)]=chat
         return JsonResponse(send)
     return Response({'error': 'Invalid request method'})
 
@@ -49,11 +57,12 @@ def start(request):
 def communicate(request):
     if request.method == 'POST':
         prompt = request.POST.get('prompt')
-        response = chat.send_message(prompt)
+        index = request.POST.get('index')
+        response = (chats[int(index)]).send_message(prompt)
         return JsonResponse({'response': response.text})
     return JsonResponse({'error': 'Invalid request method'})
 
-@csrf_exempt
+@csrf_exempt #ahorita no sirve
 def logs(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
@@ -61,7 +70,7 @@ def logs(request):
             return JsonResponse({'error': 'Study ID not provided'})
         filename = f'logs/{study_id}.csv'
         blob = bucket.blob(filename)
-        history = chat.history
+        history = chats.history
         history = history[2:]
         survey = '"'
         for message in history:
