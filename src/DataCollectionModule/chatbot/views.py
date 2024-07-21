@@ -65,7 +65,7 @@ def start(request):
         response = chat.send_message(prompt + "Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
                           + json_data 
                           + "\nSos un encuestador. A partir de las preguntas recolecta información. Si una pregunta principal tiene "
-                          + "\"feedback_questions\" vas a preguntaras individualmente inmediatamente después de su pregunta principal." 
+                          + "\"feedback_questions\" vas a preguntar individualmente cada pregunta de seguimiento inmediatamente después de su pregunta principal." 
                           + "Si una respuesta a las preguntas principales no es clara, hace tus propias preguntas de seguimiento" 
                           + "hasta tener respuestas satisfactorias. No haras preguntas de seguimiento a las \"feedback_questions\"."
                           + "Si la respuesta es clara, continua con la siguiente pregunta. Solamente enviaras preguntas en tus mensajes, "
