@@ -57,7 +57,7 @@ def user_logout(request):
             token.delete()
         except Token.DoesNotExist:
             pass
-    logout(request)
+        logout(request)
     return Response({'message': 'You have successfully logged out.'}, status=status.HTTP_200_OK)
 
 
@@ -73,7 +73,7 @@ def password_reset_request(request):
             email_template_name = 'password_reset_email.html'
             c = {
                 'email': user.email,
-                'domain': '127.0.0.1:8000/',
+                'domain': 'localhost:63342/',
                 'site_name': 'Los Pixies',
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'user': user,
