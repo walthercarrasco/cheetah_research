@@ -1,13 +1,14 @@
 from django.http import JsonResponse
-from django.shortcuts import render
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
-from django.core.files.storage import default_storage
-from google.cloud import storage
+import boto3
 
-import os
 db = settings.MONGO_DB
-bucket = storage.Client().get_bucket('cactusbucket')
+s3 = boto3.client('s3', 
+                  aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
+                  aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+bucket_name = settings.BUCKET_NAME
+bucket_url = settings.BUCKET_URL
 
 @csrf_exempt
 def createInterviewer(request):
@@ -16,16 +17,23 @@ def createInterviewer(request):
         filename = None
         if(request.FILES):
             image_file = request.FILES['interviewerProfilePicture']
-            filename = f'pfp/{body.get('surveyId')}/'+image_file.name
-            blob = bucket.blob(filename)
-            blob.upload_from_file(image_file)
+            extension = image_file.name.split('.')[-1]
+            filename = body.get('study_id') + '.' + extension
+            content_type = {
+                    "jpeg": "image/jpeg",
+                    "jpg": "image/jpeg",
+                    "png": "image/png",
+            }.get(extension, "application/octet-stream")
+            s3.put_object(Bucket='cheetahresearch', Key='pfp/'+filename, Body=image_file, ContentType=content_type)
+            s3.put_object_acl(ACL='public-read', Bucket=bucket_name, Key='pfp/'+filename)
+            
         data = {
             'interviewerName':body.get('interviewerName'),
-            'interviewerProfilePicture':filename,
+            'interviewerProfilePicture':'pfp/'+filename,
             'interviewerTone':body.get('interviewerTone'),
             'interviewerGreeting':body.get('interviewerGreeting'),
             'importantObservation':body.get('importantObservation'),
-            'studyId':body.get('studyId')
+            'study_id':body.get('study_id')
         }
         post = db['Interviewer'].insert_one(data)
         
@@ -38,26 +46,15 @@ def createInterviewer(request):
 @csrf_exempt
 def getInterviewer(request):
     if request.method == 'POST':
-        interviewer = db['Interviewer'].find_one({'studyId': request.POST['studyId']})
+        interviewer = db['Interviewer'].find_one({'study_id': request.POST['study_id']})
         pfp = interviewer.get('interviewerProfilePicture')
-        blob = bucket.blob(pfp)
         return JsonResponse({
-            'interviewers': [
-                {
                     'interviewer_id': str(interviewer['_id']),
                     'interviewerName': interviewer['interviewerName'],
-                    'interviewerProfilePicture': pfp,
+                    'interviewerProfilePicture': bucket_url + pfp,
                     'interviewerTone': interviewer['interviewerTone'],
                     'interviewerGreeting': interviewer['interviewerGreeting'],
-                    'studyId': interviewer['studyId']
-                } 
-            ]
-        })
+                    'study_id': interviewer['study_id']
+                })
     return JsonResponse({'error': 'Invalid request method'})
 
-def getInterviewerPfp(request):
-    if request.method == 'POST':
-        interviewer = db['Interviewer'].find_one({'studyId': request.POST['studyId']})
-        pfp = interviewer.get('interviewerProfilePicture')
-        blob = bucket.blob(pfp)
-    return JsonResponse({'error': 'Invalid request method'})
