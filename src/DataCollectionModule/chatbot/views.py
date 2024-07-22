@@ -61,14 +61,14 @@ def start(request):
         chat = model.start_chat(history=[])
         response = chat.send_message(prompt + "Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
                           + json_data 
-                          + "\nSos un encuestador. A partir de las preguntas recolecta información. Si una pregunta principal tiene "
-                          + "\"feedback_questions\" vas a preguntar individualmente, una por una cada pregunta de seguimiento "
-                          + "inmediatamente después de su pregunta principal. Si una respuesta a las preguntas principales no te brinda la informacion necesaria, " 
-                          + "o la respuesta es muy blanda, hace tus propias preguntas de seguimiento " 
-                          + "y se inquisitivo hasta tener respuestas satisfactorias. No haras preguntas de seguimiento a las \"feedback_questions\"."
-                          + "Si la respuesta te brinda suficiente informacion, continua con la siguiente pregunta. Solamente enviaras una pregunta en tus mensajes, "
-                          + "no vas a insinuar respuestas para que el usuario conteste. Comenza con la primera pregunta."
-                          + "En cuanto termines la encuesta, escribi 'LISTO' para finalizar la conversación.")
+                          + "\nEres un entrevistador. Genera una línea para continuar la conversación sobre las preguntas descritas a continuación. Necesitamos "
+                          + "discutir todas las preguntas de manera coherente (mensaje por mensaje), así que no hagas más de una pregunta en el mensaje."
+                          + "Si el diálogo ya tiene información sobre todas las preguntas, formula una pregunta de profundización para obtener una respuesta más " 
+                          + "detallada (posible redacción: \"Cuéntame más sobre...\", \"¿Qué más...\", \"¿Cómo...\", \"¿Por qué...\", \"¿Qué quieres decir con...\", \"Aclara...\", " 
+                          + "\"¿Qué exactamente...\", etc.). No haras preguntas de seguimiento a las \"feedback_questions\"."
+                          + "Si al respondedor le resulta difícil o no sabe, pídele que adivine lo que piensa o siente."
+                          + "No sugieras respuestas, no ofrezcas opciones de respuesta, no inventes respuestas para el respondedor. Comenza con la primera pregunta."
+                          + "Mantén el tono de la conversación del diálogo en curso. En cuanto termines la encuesta, escribi 'LISTO' para finalizar la conversación.")
 
         send = {"content":selected_questions,
                 "hash": hash(chat),
