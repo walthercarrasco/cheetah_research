@@ -5,9 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 from rest_framework.response import Response
 import google.generativeai as genai
-from google.cloud import storage
 from bson import ObjectId
-from io import BytesIO
 import boto3
 import json
 
@@ -15,7 +13,6 @@ GEMINI_API_KEY = settings.GEMINI_API_KEY
 db = settings.MONGO_DB 
 s3 = boto3.client('s3')
 
-bucket = storage.Client().get_bucket('cactusbucket')
 genai.configure(api_key=GEMINI_API_KEY)
 
 model = genai.GenerativeModel('gemini-1.5-pro')
@@ -95,7 +92,6 @@ def logs(request):
         if study_id is None:
             return JsonResponse({'error': 'Study ID not provided'})
         filename = f'logs/{study_id}.csv'
-        blob = bucket.blob(filename)
         history = chats.history
         history = history[2:]
         survey = '"'
@@ -115,7 +111,6 @@ def logs(request):
         survey = survey[:-2]
         survey.replace("\n", " ")
         print(survey)
-        with blob.open(mode='w') as f:
-            f.write(survey)
+        
         return JsonResponse({'response': survey})
     return JsonResponse({'error': 'Invalid request method'})
