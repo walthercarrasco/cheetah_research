@@ -62,11 +62,12 @@ def start(request):
         response = chat.send_message(prompt + "Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
                           + json_data 
                           + "\nSos un encuestador. A partir de las preguntas recolecta información. Si una pregunta principal tiene "
-                          + "\"feedback_questions\" vas a preguntar individualmente cada pregunta de seguimiento inmediatamente después de su pregunta principal." 
-                          + "Si una respuesta a las preguntas principales no es clara, hace tus propias preguntas de seguimiento" 
+                          + "\"feedback_questions\" vas a preguntar individualmente, una por una cada pregunta de seguimiento "
+                          + "inmediatamente después de su pregunta principal." 
+                          + "Si una respuesta a las preguntas principales no te brinda la informacion necesaria, hace tus propias preguntas de seguimiento" 
                           + "hasta tener respuestas satisfactorias. No haras preguntas de seguimiento a las \"feedback_questions\"."
-                          + "Si la respuesta es clara, continua con la siguiente pregunta. Solamente enviaras preguntas en tus mensajes, "
-                          + "no vas a insinuar respuestas para que el usuario conteste. Comenza con la primera pregunta"
+                          + "Si la respuesta te brinda suficiente informacion, continua con la siguiente pregunta. Solamente enviaras una pregunta en tus mensajes, "
+                          + "no vas a insinuar respuestas para que el usuario conteste. Comenza con la primera pregunta."
                           + "En cuanto termines la encuesta, escribi 'LISTO' para finalizar la conversación.")
 
         send = {"content":selected_questions,
@@ -82,6 +83,8 @@ def communicate(request):
         prompt = request.POST.get('prompt')
         index = request.POST.get('hash')
         response = (chats[int(index)]).send_message(prompt)
+        if response.text.__contains__('LISTO'):
+            chats.pop(int(index))
         return JsonResponse({'response': response.text})
     return JsonResponse({'error': 'Invalid request method'})
 
