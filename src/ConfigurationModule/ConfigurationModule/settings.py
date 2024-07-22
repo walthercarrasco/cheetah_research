@@ -30,7 +30,6 @@ SECRET_KEY = env('SECRET_KEY')
 DEBUG = env('DEBUG')
 
 
-ALLOWED_HOSTS = []
 STATIC_URL = '/static/'
 ALLOWED_HOSTS = ['*']
 GEMINI_API_KEY = env('GEMINI_API_KEY')
@@ -58,7 +57,6 @@ INSTALLED_APPS = [
     'infoStudy',
     'createInterviewer',
     'list_studies',
-
 ]
 SITE_ID = 1
 
@@ -71,11 +69,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'corsheaders.middleware.CorsMiddleware',
-]
-CORS_ALLOWED_ORIGINS = [
-    'http://localhost:63343',
-    'http://127.0.0.1:8000',
 ]
 
 ROOT_URLCONF = 'ConfigurationModule.urls'
@@ -117,8 +110,12 @@ DATABASES = {
 MONGO_URI=env('MONGO_URI')
 MONGO_DATABASE=env('MONGO_DATABASE')
 client = MongoClient(MONGO_URI)
-MONGO_DB = client[MONGO_DATABASE]   
+MONGO_DB = client[MONGO_DATABASE]
 
+AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
+AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
+BUCKET_URL = env('BUCKET_URL')
+BUCKET_NAME = env('BUCKET_NAME')
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators
