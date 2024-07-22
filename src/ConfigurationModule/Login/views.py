@@ -12,8 +12,10 @@ from django.utils.encoding import force_bytes, force_str
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from anymail.message import AnymailMessage
+
 from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, PasswordResetRequestSerializer, SetPasswordSerializer
 from .models import User
+
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
@@ -57,7 +59,7 @@ def user_logout(request):
             token.delete()
         except Token.DoesNotExist:
             pass
-    logout(request)
+        logout(request)
     return Response({'message': 'You have successfully logged out.'}, status=status.HTTP_200_OK)
 
 
@@ -73,7 +75,7 @@ def password_reset_request(request):
             email_template_name = 'password_reset_email.html'
             c = {
                 'email': user.email,
-                'domain': '127.0.0.1:8000/',
+                'domain': 'localhost:63342/',
                 'site_name': 'Los Pixies',
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'user': user,
@@ -117,6 +119,6 @@ def password_reset_confirm(request, uidb64=None, token=None):
     return Response({'error': 'The reset password link is no longer valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-@permission_classes(['IsAuthenticated'])
+@permission_classes([IsAuthenticated])
 def home(request):
     return Response({'message': 'Welcome to the home page!'}, status=status.HTTP_200_OK)
