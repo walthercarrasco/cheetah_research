@@ -61,3 +61,24 @@ def setStatus(request, study_id):
         return JsonResponse({'status': 'success'})
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
+
+@csrf_exempt
+def getSurvey(request, study_id):
+    try:
+        # Convertir study_id a ObjectId
+        study_oid = ObjectId(study_id)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'Formato de ID de estudio inválido.'}, status=400)
+    try:
+        # Obtener el documento del estudio desde la colección de MongoDB
+        survey = db['Surveys'].find_one({
+            'study_id': study_oid
+        })
+        if survey is None:
+            return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
+        survey.pop('_id')
+        survey.pop('study_id')
+        print(survey)
+        return JsonResponse(survey)
+    except pymongo.errors.PyMongoError as e:
+        return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
