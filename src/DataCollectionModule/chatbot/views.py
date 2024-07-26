@@ -9,6 +9,7 @@ from bson import ObjectId
 from datetime import datetime, timedelta
 import boto3
 import json
+import io
 
 GEMINI_API_KEY = settings.GEMINI_API_KEY
 db = settings.MONGO_DB 
@@ -65,11 +66,11 @@ def start(request):
                     }
                 )
                 
-            if "picture" in question:
+            if "file_path" in question:
                 questionWithPic.append(
                     {
                         "question": question["question"],
-                        "picture": question["picture"]
+                        "file_path": question["file_path"]
                     }
                 )
                 
@@ -103,7 +104,9 @@ def start(request):
         chats[hash(chat)]=chat
         picMap[hash(chat)] = questionWithPic
         urlMap[hash(chat)] = questionsWithUrl
+        questionsForHistory[hash(chat)] = allQuestions
         startTimes[hash(chat)] = datetime.now()
+        print(allQuestions)
         return JsonResponse(send)
     return Response({'error': 'Invalid request method'})
 
@@ -118,8 +121,7 @@ def communicate(request):
         pic = None
         urls = urlMap[int(index)]
         pics = picMap[int(index)]
-        print(urls)
-        print(pics)
+        
         if len(urls) > 0:
             for element in urls:
                 if element["question"] == answer:
@@ -130,29 +132,34 @@ def communicate(request):
         if len(pics) > 0:
             for element in pics:
                 if element["question"] == answer:
-                    pic = element["picture"]
+                    pic = element["file_path"]
                     print(pic)
                     break
-                
-        if response.text.__contains__('LISTO'):
-            chats.pop(int(index))
-            urlMap.pop(int(index))
-            picMap.pop(int(index))
             
         if url is not None and pic is not None:
-            return JsonResponse({'response': answer, 'url': url, 'pic': pic})
+            return JsonResponse({'response': answer, 'url': url, 'file_path': pic})
         if url is not None:
             return JsonResponse({'response': answer, 'url': url})
         if pic is not None:
-            return JsonResponse({'response': answer, 'pic': pic})  
+            return JsonResponse({'response': answer, 'file_path': pic})  
         return JsonResponse({'response': answer})
     return JsonResponse({'error': 'Invalid request method'})
 
 @csrf_exempt #ahorita no sirve
 def logs(request):
+    """_summary_
+
+    Args:
+        request (_type_): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    
     if request.method == 'POST':
         study_id = request.POST['study_id']
         index = request.POST['hash']
+        
         if study_id is None:
             return JsonResponse({'error': 'Study ID not provided'})
         
@@ -163,8 +170,33 @@ def logs(request):
         if study is None:
             return JsonResponse({'error': 'Study not found'})
         
+        filter = {'_id': ObjectId(study_id)}
+        update = {
+            '$set': {
+                'last_update': datetime.now()
+            }
+        }
+        db['survey_logs'].update_one(filter, update)
+        
         currentChat = chats[int(index)]
+        currentQuestions = questionsForHistory[int(index)]
         history = currentChat.history
-        history = history[1:]
+        history = history[2:]
+        csvLine = '"'
+        print(datetime.now())
         print(history)
+        for message in history:
+            if message.role == 'user':
+                csvLine += message.parts[0].text
+            if message.role == 'model':
+                if (message.parts[0].text).replace("\n", "") in currentQuestions:
+                    csvLine += '","'
+                else:
+                    csvLine += ' '
+        csvLine += '"\n'
+        print(csvLine)
+        chats.pop(int(index))
+        urlMap.pop(int(index))
+        picMap.pop(int(index))
+        #s3.download_file(bucket_name, object_name, local_file_name)
     return JsonResponse({'error': 'Invalid request method'})
