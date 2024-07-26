@@ -6,17 +6,26 @@ from django.conf import settings
 from rest_framework.response import Response
 import google.generativeai as genai
 from bson import ObjectId
+from datetime import datetime, timedelta
 import boto3
 import json
 
 GEMINI_API_KEY = settings.GEMINI_API_KEY
 db = settings.MONGO_DB 
-s3 = boto3.client('s3')
-
+db = settings.MONGO_DB
+s3 = boto3.client('s3', 
+                  aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
+                  aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+bucket_name = settings.BUCKET_NAME
+bucket_url = settings.BUCKET_URL
 genai.configure(api_key=GEMINI_API_KEY)
 
 model = genai.GenerativeModel('gemini-1.5-pro')
 chats = {}
+picMap = {}
+urlMap = {}
+questionsForHistory = {}
+startTimes = {}
 
 @csrf_exempt
 def start(request):
@@ -36,7 +45,12 @@ def start(request):
         
         #Select questions to send to chatbot
         selected_questions = []
+        questionsWithUrl = []
+        questionWithPic = []
+        allQuestions = []
         for question in questions:
+            allQuestions.append(question["question"])
+            
             if "feedback_questions" in question:
                 selected_questions.append(
                     {
@@ -50,10 +64,23 @@ def start(request):
                         "question": question["question"]
                     }
                 )
-        print('-------------------')
-        print(selected_questions)
-        print('-------------------')
-        
+                
+            if "picture" in question:
+                questionWithPic.append(
+                    {
+                        "question": question["question"],
+                        "picture": question["picture"]
+                    }
+                )
+                
+            if "url" in question:
+                questionsWithUrl.append(
+                    {
+                        "question": question["question"],
+                        "url": question["url"]
+                    }
+                )
+                
         #Send instructions to chatbot
         prompt = study['prompt']
         json_data = json.dumps(selected_questions, indent=4)
@@ -74,6 +101,9 @@ def start(request):
                 "hash": hash(chat),
                 "response": response.text}
         chats[hash(chat)]=chat
+        picMap[hash(chat)] = questionWithPic
+        urlMap[hash(chat)] = questionsWithUrl
+        startTimes[hash(chat)] = datetime.now()
         return JsonResponse(send)
     return Response({'error': 'Invalid request method'})
 
@@ -83,37 +113,58 @@ def communicate(request):
         prompt = request.POST.get('prompt')
         index = request.POST.get('hash')
         response = (chats[int(index)]).send_message(prompt)
+        answer = (response.text).replace("\n", "")
+        url = None
+        pic = None
+        urls = urlMap[int(index)]
+        pics = picMap[int(index)]
+        print(urls)
+        print(pics)
+        if len(urls) > 0:
+            for element in urls:
+                if element["question"] == answer:
+                    url = element["url"]
+                    print(url)
+                    break
+                
+        if len(pics) > 0:
+            for element in pics:
+                if element["question"] == answer:
+                    pic = element["picture"]
+                    print(pic)
+                    break
+                
         if response.text.__contains__('LISTO'):
             chats.pop(int(index))
-        return JsonResponse({'response': response.text})
+            urlMap.pop(int(index))
+            picMap.pop(int(index))
+            
+        if url is not None and pic is not None:
+            return JsonResponse({'response': answer, 'url': url, 'pic': pic})
+        if url is not None:
+            return JsonResponse({'response': answer, 'url': url})
+        if pic is not None:
+            return JsonResponse({'response': answer, 'pic': pic})  
+        return JsonResponse({'response': answer})
     return JsonResponse({'error': 'Invalid request method'})
 
 @csrf_exempt #ahorita no sirve
 def logs(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
+        index = request.POST['hash']
         if study_id is None:
             return JsonResponse({'error': 'Study ID not provided'})
-        filename = f'logs/{study_id}.csv'
-        history = chats.history
-        history = history[2:]
-        survey = '"'
-        for message in history:
-            if(message.role == 'user'):
-                answer = message.parts[0].text.replace("\n", " ")
-                if answer.__contains__("|"):
-                    answer = answer.split("|")[1]
-                survey += answer+','
-            if(message.role == 'model'):
-                if(message.parts[0].text.__contains__('LISTO')):
-                    survey = survey[:-1]
-                    survey += '","'
-            print(message.role)
-            print(message.parts[0].text)
-            print('-------------------------------')
-        survey = survey[:-2]
-        survey.replace("\n", " ")
-        print(survey)
         
-        return JsonResponse({'response': survey})
+        if index is None:
+            return JsonResponse({'error': 'Index not provided'})
+        
+        study = db['Surveys'].find_one({'study_id': ObjectId(study_id)})
+        if study is None:
+            return JsonResponse({'error': 'Study not found'})
+        
+        currentChat = chats[int(index)]
+        history = currentChat.history
+        history = history[1:]
+        print(history)
     return JsonResponse({'error': 'Invalid request method'})
