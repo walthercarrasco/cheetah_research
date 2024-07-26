@@ -57,6 +57,7 @@ INSTALLED_APPS = [
     'infoStudy',
     'createInterviewer',
     'list_studies',
+    'summaries'
 ]
 SITE_ID = 1
 
