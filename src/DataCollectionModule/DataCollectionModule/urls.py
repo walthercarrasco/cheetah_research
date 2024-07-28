@@ -17,10 +17,13 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from chatbot.views import communicate, logs, start
+from socrates.views import startS, communicateS
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('communicate/', communicate),
     path('logs/', logs),
     path('start/', start),
+    path('startS/', startS),
+    path('communicateS/', communicateS)
 ]
