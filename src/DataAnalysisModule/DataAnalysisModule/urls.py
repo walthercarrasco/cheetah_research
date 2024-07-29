@@ -20,7 +20,7 @@ from socrates.views import startS, communicateS, stopS
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('startS/, startS),
-    path('communicateS/, communicateS),
-    path('stopS/, stopS)
+    path('startS/', startS),
+    path('communicateS/', communicateS),
+    path('stopS/', stopS)
 ]
