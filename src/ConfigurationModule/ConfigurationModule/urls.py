@@ -30,4 +30,5 @@ urlpatterns = [
     path("api/v1/dj-rest-auth/", include("dj_rest_auth.urls")),
     path('', include('list_studies.urls'), name='list_studies'),
     path('', include('summaries.urls'), name='summaries'),
+    path('', include('upload_files.urls'), name='upload_files'),
 ]
