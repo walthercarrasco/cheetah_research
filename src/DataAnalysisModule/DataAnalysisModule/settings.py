@@ -127,6 +127,7 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+GEMINI_API_KEY = env('GEMINI_API_KEY')
 MONGO_URI=env('MONGO_URI')
 MONGO_DATABASE=env('MONGO_DATABASE')
 client = MongoClient(MONGO_URI)
