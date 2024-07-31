@@ -7,6 +7,8 @@ import google.generativeai as genai
 import boto3
 import chardet
 import os
+from bson import ObjectId
+import json
 
 GEMINI_API_KEY = settings.GEMINI_API_KEY
 db = settings.MONGO_DB 
@@ -39,15 +41,22 @@ def startS(request):
         #Configure Socrates
         chat = model.start_chat(history=[])
         
-        chat.send_message("Te llamas Socrates, tu funcion es contestar cualquier pregunta que yo te haga. "+
-                          "Te enviare uno o mas archivos, y a partir de esos archivos, tendras que analizarlos "+
-                          "para contestar mis preguntas. No contestes preguntas a partir de informacion fuera de "+
-                          "esos archivos, solamente te basaras en esos archivos para contestar mis preguntas. " +
-                          "Contesta de manera profesional y objetiva, analizando completamente los archivos proporcionados "+
-                          "Seguiras recibiendo archivos hasta que yo te de diga LISTO. Tomaras "+
-                          "en cuenta todos los archivos para contestar las preguntas. "+
-                          "Cuando yo diga LISTO, vas a saludar de la siguiente forma: "+
-                          "Hola, soy Socrates, estoy listo para contestar tus preguntas.")  
+        analisis = db['data_analysis'].find_one({'_id': ObjectId(study_id)})
+        
+        send = {
+            'general': analisis['general'],
+            'individual_questions': analisis['individual_questions'],
+            'psicographic_questions': analisis['psicographic_questions']
+        }
+        
+        json_data = json.dumps(send, indent=4)
+        
+        chat.send_message("Te llamas Socrates, se te enviaran uno o mas archivos acerca de un estudio, y un resumen de este estudio."+ json_data+
+                          "Tu funcion es analizarlos y contestar preguntas que te hagan sobre el estudio. Puedes extrapolar resultados segun demografia, y otros "+
+                          "campos que te pudieran preguntar. Te basaras solamente en los archivos y el resumen para contestar las preguntas."+
+                          "Tendras un tono profesional y objetiva, y daras resulados detallados y minuciosos de la pregunta hecha. " +
+                          "Puedes sacar estadisticas a partir de los documentos proporcionados, especialmente documentos csv. "+
+                          "Seguiras recibiendo archivos hasta que yo te de diga LISTO. Luego contestaras todas las preguntas que se te hagan. ")  
         
         #Extract the files  
         if 'Contents' in objects:
