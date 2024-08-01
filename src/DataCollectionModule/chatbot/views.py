@@ -249,9 +249,14 @@ def logs(request):
         history = currentChat.history
         history = history[2:]
         
+        
         #Save log in csv file
         data = []
         data.append(index)
+        
+        #Get start time and time taken
+        data.append(startTimes[int(index)])
+        data.append((datetime.now()-startTimes[int(index)]))
         line = ''
         
         #Get chat history
@@ -272,9 +277,6 @@ def logs(request):
                 
                 if count == len(currentQuestions):
                     line += ', '
-        #Get start time and time taken
-        data.append(str(startTimes[int(index)]))
-        data.append(str(datetime.now()-startTimes[int(index)]))
 
         #Save log in csv file
         csv_key = f"surveys/{study_id}/log_{study_id}.csv"
@@ -304,10 +306,10 @@ def logs(request):
             # The file does not exist, so create it  
             columns = []
             columns.append('index')
-            for question in currentQuestions:
-                columns.append(question)
             columns.append('start_time')
             columns.append('time_taken')
+            for question in currentQuestions:
+                columns.append(question)
 
             df = pd.DataFrame([data],columns=columns)
             csv_buffer = StringIO()
