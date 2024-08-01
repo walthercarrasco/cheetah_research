@@ -14,7 +14,8 @@ GEMINI_API_KEY = settings.GEMINI_API_KEY
 db = settings.MONGO_DB 
 s3 = boto3.client('s3', 
                   aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
-                  aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY)
+                  aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+                  region_name='us-east-1')
 bucket_name = settings.BUCKET_NAME
 
 genai.configure(api_key=GEMINI_API_KEY)
@@ -43,11 +44,13 @@ def startS(request):
         
         analisis = db['data_analysis'].find_one({'_id': ObjectId(study_id)})
         
-        send = {
-            'general': analisis['general'],
-            'individual_questions': analisis['individual_questions'],
-            'psicographic_questions': analisis['psicographic_questions']
-        }
+        send = {}
+        if analisis is not None:
+            send = {
+                'general': analisis['general'],
+                'individual_questions': analisis['individual_questions'],
+                'psicographic_questions': analisis['psicographic_questions']
+            }
         
         json_data = json.dumps(send, indent=4)
         
