@@ -260,9 +260,10 @@ def logs(request):
                 line += message.parts[0].text
             if message.role == 'model':
                 count = 0
-                temp = (message.parts[0].text).replace("\n", "").replace("\r", "")
+                temp = (message.parts[0].text).replace("\n", "").replace("\r", "").lower()
                 for question in currentQuestions:
-                    if question in temp or "LISTO" in temp:
+                    str = question.lower()
+                    if str in temp or "listo" in temp:
                         data.append(line)
                         line = ''
                         break
