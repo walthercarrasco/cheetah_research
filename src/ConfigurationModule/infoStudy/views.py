@@ -86,15 +86,24 @@ def getSurvey(request, study_id):
 def setFilters(request, study_id):
     if(request.method != 'POST'):
         return JsonResponse({'status': 'error', 'message': 'Invalid Method'}, status=405)
-    if('filters' not in request.POST):
-        return JsonResponse({'status': 'error', 'message': 'Missing filters parameter.'})
+    filters = request.POST.get('filters')
+    if(filters is None):
+        return JsonResponse({'status': 'error', 'message': 'Missing filters parameter.'}, status=400)
+    
     try:
         # Convertir study_id a ObjectId
         study_oid = ObjectId(study_id)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': 'Formato de ID de estudio inválido.'}, status=400)
+    
     try:
-        db['Surveys'].update_one({'_id': study_oid}, {'$set': {'filters': request.POST['filters']}})
+        filters = json.loads(filters)  # Deserializar la cadena JSON a un array
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)
+    
+    try:
+        db['Surveys'].update_one({'_id': study_oid}, {'$set': {'filters': filters}})
+        return JsonResponse({'status': 'success'})
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
 
@@ -103,14 +112,20 @@ def setModules (request, study_id):
     if(request.method != 'POST'):
         return JsonResponse({'status': 'error', 'message': 'Invalid Method'}, status=405)
     if('modules' not in request.POST):
-        return JsonResponse({'status': 'error', 'message': 'Missing modules parameter.'})
+        return JsonResponse({'status': 'error', 'message': 'Missing modules parameter.'}, status=400)
     try:
         # Convertir study_id a ObjectId
         study_oid = ObjectId(study_id)
     except Exception as e:
         return JsonResponse({'status': 'error', 'message': 'Formato de ID de estudio inválido.'}, status=400)
+    
     try:
-        db['Summaries'].insert_one({'_id': study_oid, 'modules': request.POST['modules']})
+        modules = json.loads(request.POST.get('modules'))  # Deserializar la cadena JSON a un array
+    except json.JSONDecodeError:
+        return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)    
+    
+    try:
+        db['Summaries'].insert_one({'_id': study_oid, 'modules': modules})
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
     return JsonResponse({'status': 'success'})
