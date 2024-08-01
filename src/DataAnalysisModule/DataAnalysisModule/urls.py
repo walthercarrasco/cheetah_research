@@ -23,5 +23,5 @@ urlpatterns = [
     path('startS/', startS),
     path('communicateS/', communicateS),
     path('stopS/', stopS),
-    path('analysis/', include('analysis.urls')),
+    path('', include('analysis.urls')),
 ]
