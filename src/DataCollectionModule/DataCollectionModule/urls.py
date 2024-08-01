@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from chatbot.views import communicate, logs, start
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('communicate/', communicate),
+    path('logs/', logs),
+    path('start/', start),
 ]
