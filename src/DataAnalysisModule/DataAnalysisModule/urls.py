@@ -16,7 +16,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from socrates.views import startS, communicateS, stopS
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('startS/', startS),
+    path('communicateS/', communicateS),
+    path('stopS/', stopS)
 ]
