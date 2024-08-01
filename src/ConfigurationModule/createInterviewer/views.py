@@ -46,7 +46,7 @@ def createInterviewer(request):
 @csrf_exempt
 def getInterviewer(request):
     if request.method == 'POST':
-        interviewer = db['Interviewer'].find_one({'_id': ObjectId(request.POST['study_id']}))
+        interviewer = db['Interviewer'].find_one({'_id': ObjectId(request.POST.get('study_id'))})
         pfp = interviewer.get('interviewerProfilePicture')
         return JsonResponse({
                     'interviewer_id': str(interviewer['_id']),
