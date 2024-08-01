@@ -54,6 +54,6 @@ def getInterviewer(request):
                     'interviewerProfilePicture': bucket_url + pfp,
                     'interviewerTone': interviewer['interviewerTone'],
                     'interviewerGreeting': interviewer['interviewerGreeting'],
-                    '_id': interviewer['_id']
+                    '_id': str(interviewer['_id'])
                 })
     return JsonResponse({'error': 'Invalid request method'})

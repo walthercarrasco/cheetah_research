@@ -77,7 +77,8 @@ def getSurvey(request, study_id):
         if survey is None:
             return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
         survey.pop('_id')
-        survey.append({'study_id': study_id})
+        print(survey)
+        survey['study_id'] = study_id
         return JsonResponse(survey)
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
