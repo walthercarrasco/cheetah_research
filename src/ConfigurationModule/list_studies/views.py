@@ -19,11 +19,10 @@ def get_studies(request):
         data = DB['Study'].find()
         studies = []
         for d in data:
-            survey = DB['Surveys'].find_one({'study_id': d.get('_id')})
+            survey = DB['Surveys'].find_one({'_id': d.get('_id')})
             if survey:
                 prompt = survey.get('prompt')
                 questions = survey.get('questions', [])
-                print(prompt, questions)
                 summary = str(getSummary(prompt, questions).text)
                 d['summary'] = summary
             d['_id'] = str(d['_id'])

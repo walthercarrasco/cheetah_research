@@ -39,7 +39,7 @@ def create_study(request):
 
             try:
                 inserted = db['Study'].insert_one(data)
-                db['Surveys'].insert_one({'study_id': inserted.inserted_id,'prompt': prompt,'test': True, 'questions': []})
+                db['Surveys'].insert_one({'_id': ObjectId(inserted.inserted_id),'prompt': prompt,'test': True, 'questions': []})
                 return JsonResponse({
                     'status': 'success',
                     'study_id': str(inserted.inserted_id)

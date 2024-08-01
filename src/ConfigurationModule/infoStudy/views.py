@@ -72,13 +72,12 @@ def getSurvey(request, study_id):
     try:
         # Obtener el documento del estudio desde la colección de MongoDB
         survey = db['Surveys'].find_one({
-            'study_id': study_oid
+            '_id': study_oid
         })
         if survey is None:
             return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
         survey.pop('_id')
-        survey.pop('study_id')
-        print(survey)
+        survey.append({'study_id': study_id})
         return JsonResponse(survey)
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)

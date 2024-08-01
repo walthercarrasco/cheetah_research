@@ -41,7 +41,7 @@ def saveQuestions(questions, study_id, files):
         file_task.start()
 
     # Save the questions to the database
-    db['Surveys'].update_one({'study_id': ObjectId(study_id)}, {'$set': {'questions': questions}})
+    db['Surveys'].update_one({'_id': ObjectId(study_id)}, {'$set': {'questions': questions}})
 
 def upload_file_to_bucket(path, file_content, content_type):
     extension = path.split('.')[-1]
