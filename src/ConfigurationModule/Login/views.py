@@ -141,3 +141,10 @@ def activate_user(request):
         except User.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def check_session(request):
+    if request.user.is_authenticated:
+        return Response({'message': 'You are logged in.'}, status=status.HTTP_200_OK)
+    return Response({'message': 'You are not logged in.'}, status=status.HTTP_401
