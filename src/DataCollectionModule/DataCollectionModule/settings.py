@@ -29,8 +29,15 @@ SECRET_KEY = env('SECRET_KEY')
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = env.bool('DEBUG')
 
-CORS_ALLOW_ALL_ORIGINS = True
-ALLOWED_HOSTS = ['*']
+CORS_ALLOWED_ORIGINS = [
+    "https://api.cheetah-research.ai",
+    "https://cheetah-research.ai",
+    "http://localhost:8080",
+    "http://127.0.0.1:8080",
+    "http://172.31.16.5:80",
+]
+
+ALLOWED_HOSTS = ['api.cheetah-research.ai', 'cheetah-research.ai']
 
 
 # Application definition
