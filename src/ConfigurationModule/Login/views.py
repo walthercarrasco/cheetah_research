@@ -9,11 +9,12 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
+from rest_framework.permissions import IsAdminUser
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from anymail.message import AnymailMessage
 
-from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, PasswordResetRequestSerializer, SetPasswordSerializer
+from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, PasswordResetRequestSerializer, SetPasswordSerializer, UserEmailSerializer
 from .models import User
 
 
@@ -119,6 +120,8 @@ def password_reset_confirm(request, uidb64=None, token=None):
     return Response({'error': 'The reset password link is no longer valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
-@permission_classes([IsAuthenticated])
-def home(request):
-    return Response({'message': 'Welcome to the home page!'}, status=status.HTTP_200_OK)
+@permission_classes([IsAdminUser])
+def nonactive_user(request):
+    users = User.objects.filter(is_active=False)
+    serializer = UserEmailSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
