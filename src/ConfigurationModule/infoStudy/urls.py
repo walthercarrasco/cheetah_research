@@ -6,5 +6,6 @@ urlpatterns = [
     path('set_status/<str:study_id>', views.setStatus),
     path('get_survey/<str:study_id>', views.getSurvey),
     path('filters/<str:study_id>', views.setFilters),
-    path('modules/<str:study_id>', views.setModules),   
+    path('modules/<str:study_id>', views.setModules),
+    path('test/<str:study_id>/<str:test>', views.setTest),
 ]
