@@ -48,12 +48,12 @@ def start(request):
             return JsonResponse({'error': 'Study ID not provided'})
         
         #Get study from database
-        study = db['Surveys'].find_one({'study_id': ObjectId(study_id)})
+        study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
         if study is None:
             return JsonResponse({'error': 'Study not found'})
         
         #Get interviewer from database
-        interviewer = db['Interviewer'].find_one({'study_id': study_id})
+        interviewer = db['Interviewer'].find_one({'_id': study_id})
         tone = interviewer['interviewerTone']
         
         #Get questions from study
@@ -239,7 +239,7 @@ def logs(request):
             return JsonResponse({'error': 'Index not provided'})
         
         #Get study from database
-        study = db['Surveys'].find_one({'study_id': ObjectId(study_id)})
+        study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
         if study is None:
             return JsonResponse({'error': 'Study not found'})
         
