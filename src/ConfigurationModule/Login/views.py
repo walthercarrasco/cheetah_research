@@ -14,7 +14,7 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from anymail.message import AnymailMessage
 
-from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, PasswordResetRequestSerializer, SetPasswordSerializer, UserEmailSerializer
+from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, PasswordResetRequestSerializer, SetPasswordSerializer, UserEmailSerializer, UpdateUserStatusSerializer 
 from .models import User
 
 
@@ -125,3 +125,19 @@ def nonactive_user(request):
     users = User.objects.filter(is_active=False)
     serializer = UserEmailSerializer(users, many=True)
     return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def activate_user(request):
+    serializer = UpdateUserStatusSerializer(data=request.data)
+
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        try:
+            user = User.objects.get(email=email)
+            user.is_active = True
+            user.save()
+            return Response({'status': 'User activated'}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
