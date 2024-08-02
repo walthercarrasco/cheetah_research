@@ -2,7 +2,7 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.conf import settings
 import boto3
-
+from bson import ObjectId
 db = settings.MONGO_DB
 s3 = boto3.client('s3', 
                   aws_access_key_id=settings.AWS_ACCESS_KEY_ID, 
@@ -28,12 +28,12 @@ def createInterviewer(request):
             s3.put_object_acl(ACL='public-read', Bucket=bucket_name, Key='pfp/'+filename)
             
         data = {
+            '_id':ObjectId(body.get('study_id')),
             'interviewerName':body.get('interviewerName'),
             'interviewerProfilePicture':'pfp/'+filename,
             'interviewerTone':body.get('interviewerTone'),
             'interviewerGreeting':body.get('interviewerGreeting'),
-            'importantObservation':body.get('importantObservation'),
-            'study_id':body.get('study_id')
+            'importantObservation':body.get('importantObservation')
         }
         post = db['Interviewer'].insert_one(data)
         
@@ -46,7 +46,7 @@ def createInterviewer(request):
 @csrf_exempt
 def getInterviewer(request):
     if request.method == 'POST':
-        interviewer = db['Interviewer'].find_one({'study_id': request.POST['study_id']})
+        interviewer = db['Interviewer'].find_one({'_id': ObjectId(request.POST.get('study_id'))})
         pfp = interviewer.get('interviewerProfilePicture')
         return JsonResponse({
                     'interviewer_id': str(interviewer['_id']),
@@ -54,6 +54,6 @@ def getInterviewer(request):
                     'interviewerProfilePicture': bucket_url + pfp,
                     'interviewerTone': interviewer['interviewerTone'],
                     'interviewerGreeting': interviewer['interviewerGreeting'],
-                    'study_id': interviewer['study_id']
+                    '_id': str(interviewer['_id'])
                 })
     return JsonResponse({'error': 'Invalid request method'})

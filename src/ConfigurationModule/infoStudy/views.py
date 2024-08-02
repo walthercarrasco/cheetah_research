@@ -77,7 +77,8 @@ def getSurvey(request, study_id):
         if survey is None:
             return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
         survey.pop('_id')
-        survey.append({'study_id': study_id})
+        print(survey)
+        survey['study_id'] = study_id
         return JsonResponse(survey)
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
@@ -129,3 +130,25 @@ def setModules (request, study_id):
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
     return JsonResponse({'status': 'success'})
+
+@csrf_exempt
+def setTest(request, study_id, test):
+    if(request.method != 'PUT'):
+        return JsonResponse({'status': 'error', 'message': 'Invalid Method'}, status=405)
+    if(test is None):
+        return JsonResponse({'status': 'error', 'message': 'Missing test parameter.'}, status=400)
+    if(test not in ['0', '1']):
+        return JsonResponse({'status': 'error', 'message': 'Invalid test parameter.'}, status=400)
+    try:
+        # Convertir study_id a ObjectId
+        study_oid = ObjectId(study_id)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'Formato de ID de estudio inválido.'}, status=400)
+    flag = True
+    if(test == '0'):
+        flag = False
+    try:
+        db['Surveys'].update_one({'_id': study_oid}, {'$set': {'test': flag}})
+        return JsonResponse({'status': 'success'})
+    except pymongo.errors.PyMongoError as e:
+        return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
