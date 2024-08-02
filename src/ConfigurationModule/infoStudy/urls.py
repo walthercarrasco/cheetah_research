@@ -8,4 +8,5 @@ urlpatterns = [
     path('filters/<str:study_id>', views.setFilters),
     path('modules/<str:study_id>', views.setModules),
     path('test/<str:study_id>/<str:test>', views.setTest),
+    path('test/<str:study_id>', views.getTest),
 ]
