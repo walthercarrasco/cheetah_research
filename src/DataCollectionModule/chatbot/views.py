@@ -53,7 +53,7 @@ def start(request):
             return JsonResponse({'error': 'Study not found'})
         
         #Get interviewer from database
-        interviewer = db['Interviewer'].find_one({'_id': study_id})
+        interviewer = db['Interviewer'].find_one({'_id': ObjectId(study_id)})
         tone = interviewer['interviewerTone']
         
         #Get questions from study
