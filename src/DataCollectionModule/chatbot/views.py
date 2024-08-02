@@ -54,6 +54,7 @@ def start(request):
         
         #Get interviewer from database
         interviewer = db['Interviewer'].find_one({'_id': ObjectId(study_id)})
+
         tone = interviewer['interviewerTone']
         
         #Get questions from study
@@ -110,6 +111,7 @@ def start(request):
                           + "\"feedback_questions\" vas a preguntar individualmente, una por una cada pregunta de seguimiento "
                           + "inmediatamente después de su pregunta principal. El \"weight\" (1-10) de cada pregunta principal indica la importancia a una respuesta adecuada a esa pregunta."
                           + "Haras las preguntas de forma textual tal y como se te presentan, sin modificar, repetir, eliminar, una pregunta por ningun motivo."
+                          + "Tu personalidad no debe influir en cambiar la estructura de una pregunta, es sumamente importante que sigas las instrucciones al pie de la letra. "
                           + "Si una respuesta a las preguntas principales no te brinda la informacion necesaria, " 
                           + "o la respuesta es muy blanda o vaga (por ejemplo: \"nada\", \"no se\", \"no estoy seguro\", \"bien\", \"mal\", etc), hace tus propias preguntas de seguimiento " 
                           + "y se inquisitivo hasta tener respuestas satisfactorias. "
