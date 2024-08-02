@@ -35,7 +35,7 @@ def info_study(request, study_id):
         return JsonResponse({'status': 'error', 'message': 'Database error.'}, status=500)
     
 @csrf_exempt
-def setStatus(request, study_id):
+def setStatus(request, study_id, statu):
     try:
         # Convertir study_id a ObjectId
         study_oid = ObjectId(study_id)
@@ -50,14 +50,14 @@ def setStatus(request, study_id):
             return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
 
         # Actualizar el estado del estudio
-        if request.POST['studyStatus'] == 2:
+        if int(statu) == 2:
             try:
                 response = urllib.request.urlopen('http://worldtimeapi.org/api/timezone/America/Tegucigalpa')
                 enddate = json.loads(response.read())
             except Exception as e:
                 return JsonResponse({'status': 'error', 'message': 'Error al obtener la fecha desde la API.'}, status=500)
             db['Study'].update_one({'_id': study_oid}, {'$set': {'end_date': enddate['datetime']}})
-        db['Study'].update_one({'_id': study_oid}, {'$set': {'studyStatus': request.POST['studyStatus']}})
+        db['Study'].update_one({'_id': study_oid}, {'$set': {'studyStatus': int(statu)}})
         return JsonResponse({'status': 'success'})
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
@@ -77,7 +77,6 @@ def getSurvey(request, study_id):
         if survey is None:
             return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
         survey.pop('_id')
-        print(survey)
         survey['study_id'] = study_id
         return JsonResponse(survey)
     except pymongo.errors.PyMongoError as e:
