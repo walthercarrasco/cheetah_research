@@ -53,3 +53,8 @@ class PasswordResetRequestSerializer(serializers.Serializer):
 class SetPasswordSerializer(serializers.Serializer):
     new_password1 = serializers.CharField(write_only=True)
     new_password2 = serializers.CharField(write_only=True)
+
+class UserEmailSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['email']
