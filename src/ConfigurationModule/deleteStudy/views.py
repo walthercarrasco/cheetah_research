@@ -24,8 +24,8 @@ def delete_study(request):
 
             db['Study'].delete_one({'_id': ObjectId(study_id)})
 
-            db['Surveys'].delete_many({'study_id': ObjectId(study_id)})
-            db['Interviewer'].delete_many({'study_id': ObjectId(study_id)})
+            db['Surveys'].delete_many({'_id': ObjectId(study_id)})
+            db['Interviewer'].delete_many({'_id': ObjectId(study_id)})
             db['Summaries'].delete_many({'_id': ObjectId(study_id)})
             db['survey_logs'].delete_many({'_id': ObjectId(study_id)})
             db['Surveys'].delete_many({'_id': ObjectId(study_id)})
