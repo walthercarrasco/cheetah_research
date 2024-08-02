@@ -17,10 +17,11 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path
 from chatbot.views import communicate, logs, start
-
+from elimprueba.views import elimTest
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('communicate/', communicate),
-    path('logs/', logs),
-    path('start/', start),
+    path('chatbot/communicate/', communicate),
+    path('chatbot/logs/', logs),
+    path('chatbot/start/', start),
+    path('elimTest/', elimTest),
 ]
