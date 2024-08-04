@@ -147,4 +147,4 @@ def activate_user(request):
 def check_session(request):
     if request.user.is_authenticated:
         return Response({'message': 'You are logged in.'}, status=status.HTTP_200_OK)
-    return Response({'message': 'You are not logged in.'}, status=status.HTTP_401
+    return Response({'message': 'You are not logged in.'}, status=status.HTTP_401)
