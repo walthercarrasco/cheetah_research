@@ -76,12 +76,12 @@ def password_reset_request(request):
             email_template_name = 'password_reset_email.html'
             c = {
                 'email': user.email,
-                'domain': 'localhost:63342/',
-                'site_name': 'Los Pixies',
+                'domain': 'www.cheetah-research.ai/',
+                'site_name': 'Cheetah Research',
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'user': user,
                 'token': default_token_generator.make_token(user),
-                'protocol': 'http',
+                'protocol': 'https',
             }
             email_body = render_to_string(email_template_name, c)
             text_content = strip_tags(email_body)
