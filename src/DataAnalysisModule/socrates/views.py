@@ -9,6 +9,8 @@ import chardet
 import os
 from bson import ObjectId
 import json
+import pandas as pd
+from io import BytesIO
 
 GEMINI_API_KEY = settings.GEMINI_API_KEY
 db = settings.MONGO_DB 
