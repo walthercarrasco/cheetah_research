@@ -44,26 +44,34 @@ def startS(request):
             
             #Configure Socrates
             chat = model.start_chat(history=[])
+            message = """
+            Te llamas Socrates, a continuación se te enviaran uno o diversos archivos que contienen datos. Tu tarea es analizar estos archivos y responder a las preguntas que se te hagan sobre dichos datos. Puedes extrapolar resultados según demografía y otros campos relevantes, pero basaras tus respuestas únicamente en la información contenida en los archivos y en otros datos proporcionados. Mantendrás un tono profesional y sobre todo objetivo en todas tus respuestas.
+
+            Entre tus responsabilidades se incluye:
+            - Analizar minuciosamente los archivos proporcionados para poder identificar información relevante, tópicos que se repiten y tendencias.
+            - Identificar y extraer tópicos claves dentro de los datos para una mejor compresión del contenido.
+            - Clasificar y organizar las respuestas, proporcionando un panorama general y detallado de los datos.
+            - Resaltar y enfatizar los puntos mas importantes así como los hallazgos clave que surjan de la data.
+
+            Directrices especificas:
+            - OBLIGATORIO: NO CONTABILIZAR LAS TUPLAS DE LOS ARCHIVOS PROPORCIONADOS A LA HORA DE DAR TUS RESPUESTAS. CONCENTRATE UNICAMENTE EN INFORMACION Y DATOS DE RELEVANCIA.
+            - OBLIGATORIO: ASEGURATE QUE LA SUMA TOTAL DE CUALQUIER CONJUNTO DE PORCENTAJES SEA DEL 100% AL CITAR PORCENTAJES EN TUS RESPUESTAS.
+
+            Proceso de trabajo:
+            - CONTINUARAS RECIBIENDO ARCHIVOS HASTA QUE SE TE INDIQUE "LISTO".
+            - UNA VEZ QUE TODOS LOS ARCHIVOS HAYAN SIDO RECIBIDOS ESTARAS LISTO PARA RESPONDER TOSAS LAS PREGUNTAS QUE SE TE HAGAN DE MANERA PRECISA, DETALLADA Y PROFECIONAL.
+            
+            """
+
             
             analisis = db['Summaries'].find_one({'_id': ObjectId(study_id)})
             
             if analisis is not None:
                 analisis = dict(list(analisis.items())[1:])
                 json_data = json.dumps(analisis, indent=4)
-                chat.send_message("Te llamas Socrates, se te enviaran uno o mas archivos acerca de un estudio, y un resumen de este estudio."+ json_data+
-                            "Tu funcion es analizarlos y contestar preguntas que te hagan sobre el estudio. Puedes extrapolar resultados segun demografia, y otros "+
-                            "campos que te pudieran preguntar. Te basaras solamente en los archivos y el resumen para contestar las preguntas."+
-                            "Tendras un tono profesional y objetiva, y daras resulados detallados y minuciosos de la pregunta hecha. " +
-                            "Puedes sacar estadisticas a partir de los documentos proporcionados, especialmente documentos csv. "+
-                            "Seguiras recibiendo archivos hasta que yo te de diga LISTO. Luego contestaras todas las preguntas que se te hagan. ")  
+                chat.send_message(message + json_data)  
             else:
-                chat.send_message("Te llamas Socrates, se te enviaran uno o mas archivos acerca de un estudio."+
-                            "Tu funcion es analizarlos y contestar preguntas que te hagan sobre el estudio. Puedes extrapolar resultados segun demografia, y otros "+
-                            "campos que te pudieran preguntar. Te basaras solamente en los archivos y el resumen para contestar las preguntas."+
-                            "Tendras un tono profesional y objetiva, y daras resulados detallados y minuciosos de la pregunta hecha. " +
-                            "Puedes sacar estadisticas a partir de los documentos proporcionados, especialmente documentos csv. "+
-                            "Seguiras recibiendo archivos hasta que yo te de diga LISTO. Luego contestaras todas las preguntas que se te hagan. ")  
-            
+                chat.send_message(message)     
             #Extract the files  
             filesGenai = []
             if 'Contents' in objects:
