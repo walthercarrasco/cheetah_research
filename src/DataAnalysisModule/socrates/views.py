@@ -45,23 +45,29 @@ def startS(request):
             #Configure Socrates
             chat = model.start_chat(history=[])
             message = """
-            Te llamas Socrates, a continuación se te enviaran uno o diversos archivos que contienen datos. Tu tarea es analizar estos archivos y responder a las preguntas que se te hagan sobre dichos datos. Puedes extrapolar resultados según demografía y otros campos relevantes, pero basaras tus respuestas únicamente en la información contenida en los archivos y en otros datos proporcionados. Mantendrás un tono profesional y sobre todo objetivo en todas tus respuestas.
+                    Hola Sócrates,
 
-            Entre tus responsabilidades se incluye:
-            - Analizar minuciosamente los archivos proporcionados para poder identificar información relevante, tópicos que se repiten y tendencias.
-            - Identificar y extraer tópicos claves dentro de los datos para una mejor compresión del contenido.
-            - Clasificar y organizar las respuestas, proporcionando un panorama general y detallado de los datos.
-            - Resaltar y enfatizar los puntos mas importantes así como los hallazgos clave que surjan de la data.
+                    A continuación, se te enviarán uno o más archivos que contienen datos de un estudio. Tu tarea es analizarlos y responder a las preguntas que se te hagan sobre dichos datos. Baserás tus respuestas únicamente en la información contenida en los archivos y en otros datos proporcionados. Mantendrás un tono profesional y objetivo en todas tus respuestas.
 
-            Directrices especificas:
-            - OBLIGATORIO: NO CONTABILIZAR LAS TUPLAS DE LOS ARCHIVOS PROPORCIONADOS A LA HORA DE DAR TUS RESPUESTAS. CONCENTRATE UNICAMENTE EN INFORMACION Y DATOS DE RELEVANCIA.
-            - OBLIGATORIO: ASEGURATE QUE LA SUMA TOTAL DE CUALQUIER CONJUNTO DE PORCENTAJES SEA DEL 100% AL CITAR PORCENTAJES EN TUS RESPUESTAS.
+                    Tus responsabilidades incluyen:
 
-            Proceso de trabajo:
-            - CONTINUARAS RECIBIENDO ARCHIVOS HASTA QUE SE TE INDIQUE "LISTO".
-            - UNA VEZ QUE TODOS LOS ARCHIVOS HAYAN SIDO RECIBIDOS ESTARAS LISTO PARA RESPONDER TOSAS LAS PREGUNTAS QUE SE TE HAGAN DE MANERA PRECISA, DETALLADA Y PROFECIONAL.
-            
-            """
+                    Analizar minuciosamente los archivos proporcionados para identificar toda la información relevante, tópicos que se repiten y tendencias.
+                    Identificar y extraer tópicos clave dentro del estudio para una mejor comprensión del contenido.
+                    Clasificar y organizar las respuestas, proporcionando un panorama general y detallado de los datos.
+                    Resaltar y enfatizar los puntos más importantes y los hallazgos clave que surjan del análisis.
+                    Escribir resúmenes concisos pero informativos que cubran los puntos clave del estudio, empezando con una breve introducción que proporcione contexto y describa la importancia del tema, seguido de una presentación clara y estructurada de los puntos principales, utilizando viñetas o listas numeradas para mayor claridad si corresponde.
+                    Incluir datos críticos, estadísticas o citas de fuentes autorizadas para agregar credibilidad.
+                    Directrices Específicas:
+
+                    OBLIGATORIO: No contabilizar ni mencionar el número de tuplas de los archivos proporcionados en tus respuestas. Concéntrate únicamente en la información y datos relevantes.
+                    OBLIGATORIO: Asegúrate de que la suma total de cualquier conjunto de porcentajes sea del 100% al citar porcentajes en tus respuestas.
+                    Proceso de trabajo:
+
+                    Continuaré enviándote archivos hasta que te indique "LISTO".
+                    Una vez que todos los archivos hayan sido recibidos, estarás preparado para responder todas las preguntas que se te hagan sobre el estudio de manera precisa, detallada y profesional.
+                    Gracias por tu colaboración, Sócrates.
+                    
+                    """
 
             
             analisis = db['Summaries'].find_one({'_id': ObjectId(study_id)})
@@ -87,7 +93,7 @@ def startS(request):
                         s3.download_file(bucket_name, file_key, path)
                         chatFile = genai.upload_file(path)
                         filesGenai.append(chatFile)
-                        res = chat.send_message([chatFile])
+                        res = chat.send_message([chatFile, "Espera al mensaje LISTO, no analices nada aún"])
                         
                     if file_obj["ContentType"] == "text/csv":
                         csv_body = file_obj['Body'].read()
@@ -107,7 +113,7 @@ def startS(request):
                             chatFile = genai.upload_file(path)
                             print(chatFile)
                             filesGenai.append(chatFile)
-                            res = chat.send_message([chatFile, "analiza este archivo"])
+                            res = chat.send_message([chatFile, "Espera al mensaje LISTO, no analices nada aún"])
                     if file_obj["ContentType"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
                         file_content = file_obj['Body'].read()
 
@@ -122,7 +128,7 @@ def startS(request):
                         
                         chatFile = genai.upload_file(path)
                         filesGenai.append(chatFile)
-                        res = chat.send_message([chatFile])
+                        res = chat.send_message([chatFile, "Espera al mensaje LISTO, no analices nada aún"])
                         print(res.text)
                     os.remove(path)
             
