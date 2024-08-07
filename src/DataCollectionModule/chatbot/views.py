@@ -7,6 +7,7 @@ import google.generativeai as genai
 from bson import ObjectId
 from datetime import datetime
 import boto3
+from botocore.exceptions import ClientError
 import json
 import pandas as pd
 from io import StringIO
@@ -281,7 +282,7 @@ def logs(request):
 
         #Save log in csv file
         csv_key = f"surveys/{study_id}/log_{study_id}.csv"
-        try:
+        if(object_exists(bucket_name, csv_key)):
             # Get the file from S3, if it exists
             csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
             csv_body = csv_obj['Body'].read()
@@ -296,14 +297,14 @@ def logs(request):
             df = pd.concat([df, new_df], ignore_index=True)
             
             # if the file has enough responses, update the last_update field in the survey_logs collection
-            if df.size > 49:
+            if df.size > 19:
                 db['survey_logs'].update_one({'_id': ObjectId(study_id)}, {'$set': {'last_update': datetime.now()}}, upsert=True)
 
             # Save the updated DataFrame to S3
             csv_buffer = StringIO()
             df.to_csv(csv_buffer, index=False)
             s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
-        except s3.exceptions.NoSuchKey:
+        else:
             # The file does not exist, so create it  
             columns = []
             columns.append('index')
@@ -342,3 +343,14 @@ def logs(request):
         return JsonResponse({'response': 'Log saved'})  
         
     return JsonResponse({'error': 'Invalid request method'})
+
+def object_exists(bucket_name, object_key):
+    s3 = boto3.client('s3')
+    try:
+        s3.head_object(Bucket=bucket_name, Key=object_key)
+        return True
+    except ClientError as e:
+        if e.response['Error']['Code'] == '404':
+            return False
+        else:
+            raise e
