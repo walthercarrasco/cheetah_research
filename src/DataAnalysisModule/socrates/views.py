@@ -62,9 +62,9 @@ def startS(request):
                           "Seguiras recibiendo archivos hasta que yo te de diga LISTO. Luego contestaras todas las preguntas que se te hagan. ")  
         
         #Extract the files  
+        filesGenai = []
         if 'Contents' in objects:
             files = [item['Key'] for item in objects['Contents'] if item['Key'] != folder]
-            filesGenai = []
             
             #Download the files and send them to Socrates
             for file_key in files:
