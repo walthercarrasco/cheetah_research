@@ -121,7 +121,8 @@ def startS(request):
             #Send the Ready message to Socrates
             response = chat.send_message("LISTO")
             chats[hash(chat)] = chat
-            genaiFiles[hash(chat)] = filesGenai
+            if(len(filesGenai) > 0):
+                genaiFiles[hash(chat)] = filesGenai
             return JsonResponse({"response" : response.text,
                                 "hash" : hash(chat)})
     except Exception as e:
