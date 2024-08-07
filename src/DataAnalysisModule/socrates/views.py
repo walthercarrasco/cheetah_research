@@ -47,17 +47,16 @@ def startS(request):
             
             analisis = db['Summaries'].find_one({'_id': ObjectId(study_id)})
             
-            send = {}
             if analisis is not None:
-                send = {
-                    'general': analisis['general'],
-                    'individual_questions': analisis['individual_questions'],
-                    'psicographic_questions': analisis['psicographic_questions']
-                }
-            
-            json_data = json.dumps(send, indent=4)
-            
-            chat.send_message("Te llamas Socrates, se te enviaran uno o mas archivos acerca de un estudio, y un resumen de este estudio."+ json_data+
+                json_data = json.dumps(analisis, indent=4)
+                chat.send_message("Te llamas Socrates, se te enviaran uno o mas archivos acerca de un estudio, y un resumen de este estudio."+ json_data+
+                            "Tu funcion es analizarlos y contestar preguntas que te hagan sobre el estudio. Puedes extrapolar resultados segun demografia, y otros "+
+                            "campos que te pudieran preguntar. Te basaras solamente en los archivos y el resumen para contestar las preguntas."+
+                            "Tendras un tono profesional y objetiva, y daras resulados detallados y minuciosos de la pregunta hecha. " +
+                            "Puedes sacar estadisticas a partir de los documentos proporcionados, especialmente documentos csv. "+
+                            "Seguiras recibiendo archivos hasta que yo te de diga LISTO. Luego contestaras todas las preguntas que se te hagan. ")  
+            else:
+                chat.send_message("Te llamas Socrates, se te enviaran uno o mas archivos acerca de un estudio."+
                             "Tu funcion es analizarlos y contestar preguntas que te hagan sobre el estudio. Puedes extrapolar resultados segun demografia, y otros "+
                             "campos que te pudieran preguntar. Te basaras solamente en los archivos y el resumen para contestar las preguntas."+
                             "Tendras un tono profesional y objetiva, y daras resulados detallados y minuciosos de la pregunta hecha. " +
