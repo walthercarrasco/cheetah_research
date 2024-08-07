@@ -28,9 +28,9 @@ genaiFiles = {}
 
 @csrf_exempt
 def startS(request):
-    try:
-        if request.method == 'POST':
-            #Get study_id from request
+    if request.method == 'POST':
+        #Get study_id from request
+        try:
             study_id = request.POST['study_id']
             if study_id is None:
                 return JsonResponse({'error': 'Study ID not provided'})
@@ -125,9 +125,9 @@ def startS(request):
                 genaiFiles[hash(chat)] = filesGenai
             return JsonResponse({"response" : response.text,
                                 "hash" : hash(chat)})
-    except Exception as e:
-        print(e)
-        return JsonResponse({'error': 'An error occurred', 'message': e})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'error': 'An error occurred', 'message': e})
     return Response({'error': 'Invalid request method'})
 
 @csrf_exempt
