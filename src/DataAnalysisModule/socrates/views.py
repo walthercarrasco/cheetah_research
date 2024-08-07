@@ -48,6 +48,7 @@ def startS(request):
             analisis = db['Summaries'].find_one({'_id': ObjectId(study_id)})
             
             if analisis is not None:
+                analisis = dict(list(analisis.items())[1:])
                 json_data = json.dumps(analisis, indent=4)
                 chat.send_message("Te llamas Socrates, se te enviaran uno o mas archivos acerca de un estudio, y un resumen de este estudio."+ json_data+
                             "Tu funcion es analizarlos y contestar preguntas que te hagan sobre el estudio. Puedes extrapolar resultados segun demografia, y otros "+
