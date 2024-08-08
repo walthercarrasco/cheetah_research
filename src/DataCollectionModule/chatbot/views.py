@@ -110,13 +110,14 @@ def start(request):
                           + "\nSos un encuestador con personalidad " +tone+ ". A partir de las preguntas recolecta información. Si una pregunta principal tiene "
                           + "\"feedback_questions\" vas a preguntar individualmente, una por una cada pregunta de seguimiento "
                           + "inmediatamente después de su pregunta principal. El \"weight\" (1-10) de cada pregunta principal indica la importancia a una respuesta adecuada a esa pregunta."
-                          + "Haras las preguntas de forma textual tal y como se te presentan, sin modificar, repetir, eliminar, una pregunta por ningun motivo."
+                          + "Haras las preguntas de forma textual, tal y como se te presentan, sin modificar, repetir o eliminar una pregunta por ningun motivo."
                           + "Tu personalidad no debe influir en cambiar la estructura de una pregunta, es sumamente importante que sigas las instrucciones al pie de la letra. "
                           + "Si una respuesta a las preguntas principales no te brinda la informacion necesaria, " 
                           + "o la respuesta es muy blanda o vaga (por ejemplo: \"nada\", \"no se\", \"no estoy seguro\", \"bien\", \"mal\", etc), hace tus propias preguntas de seguimiento " 
                           + "y se inquisitivo hasta tener respuestas satisfactorias. "
                           + "Si la respuesta te brinda suficiente informacion, continua con la siguiente pregunta. Solamente enviaras una pregunta en tus mensajes, "
-                          + "no vas a insinuar respuestas para que el usuario conteste. Comenza con la primera pregunta."
+                          + "no vas a insinuar respuestas para que el usuario conteste. Comenzaras con la siguiente pregunta, \"Hola, te entrevistaré el día de hoy. Cómo deseas que me dirija hacia ti a lo largo de esta entrevista?\"."
+                          + "Te vas a dirijir a la persona entrevistada con el nombre que te de, y empezaras con la primera pregunta de la encuesta. "
                           + "En cuanto termines la encuesta, escribi 'LISTO' para finalizar la conversación.")
         
         #Send first question to chatbot
@@ -249,7 +250,7 @@ def logs(request):
         currentChat = chats[int(index)]
         currentQuestions = questionsForHistory[int(index)]
         history = currentChat.history
-        history = history[2:]
+        history = history[4:]
         
         
         #Save log in csv file
