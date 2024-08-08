@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
-from createInterviewer.views import createInterviewer, getInterviewer
+from createInterviewer.views import createInterviewer, getInterviewer, updateInterviewer
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,6 +26,7 @@ urlpatterns = [
     path('configuration/', include('createQuestion.urls'), name='createQuestions'),
     path('configuration/addInterviewer/', createInterviewer, name='createInterviewer'),
     path('configuration/getInterviewer/', getInterviewer, name='getInterviewer'),
+    path('configuration/updateInterviewer/', updateInterviewer, name='updateInterviewer'),
     path("configuration/api-auth/", include("rest_framework.urls")),
     path("configuration/api/v1/dj-rest-auth/", include("dj_rest_auth.urls")),
     path('configuration/', include('list_studies.urls'), name='list_studies'),
