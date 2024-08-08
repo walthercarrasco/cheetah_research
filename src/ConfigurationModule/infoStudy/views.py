@@ -168,3 +168,37 @@ def getTest(request, study_id):
         return JsonResponse({'status': 'success', 'test': survey.get('test')})
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
+    
+@csrf_exempt
+def getFilters(request, study_id):
+    if(request.method != 'GET'):
+        return JsonResponse({'status': 'error', 'message': 'Invalid Method'}, status=405)
+    try:
+        # Convertir study_id a ObjectId
+        study_oid = ObjectId(study_id)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'Formato de ID de estudio inválido.'}, status=400)
+    try:
+        survey = db['Surveys'].find_one({'_id': study_oid})
+        if survey is None:
+            return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
+        return JsonResponse({'status': 'success', 'filters': survey['filters']})
+    except pymongo.errors.PyMongoError as e:
+        return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
+    
+@csrf_exempt
+def getModules(request, study_id):
+    if(request.method != 'GET'):
+        return JsonResponse({'status': 'error', 'message': 'Invalid Method'}, status=405)
+    try:
+        # Convertir study_id a ObjectId
+        study_oid = ObjectId(study_id)
+    except Exception as e:
+        return JsonResponse({'status': 'error', 'message': 'Formato de ID de estudio inválido.'}, status=400)
+    try:
+        summary = db['Summaries'].find_one({'_id': study_oid})
+        if summary is None:
+            return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
+        return JsonResponse({'status': 'success', 'modules': summary['modules']})
+    except pymongo.errors.PyMongoError as e:
+        return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)

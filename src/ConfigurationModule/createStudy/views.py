@@ -48,3 +48,23 @@ def create_study(request):
                 return JsonResponse({'status': 'error', 'message': 'Database error.'}, status=500)
         else:
             return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+
+@csrf_exempt
+def update_study(request, study_id):
+    if request.method != 'POST':
+        return JsonResponse({'status': 'error', 'message': 'Invalid request method.'}, status=405)
+    if study_id is None:
+        return JsonResponse({'status': 'error', 'message': 'Missing study_id.'}, status=400)
+    body = request.POST
+    title = body.get('title')
+    target = body.get('target')
+    objective = body.get('objective')
+    prompt = body.get('prompt')
+    if not title or not target or not objective or not prompt:
+        return JsonResponse({'status': 'error', 'message': 'Missing required fields.'}, status=400)
+    try:
+        db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'title': title, 'marketTarget': target, 'studyObjectives': objective}})
+        db['Surveys'].update_one({'_id': ObjectId(study_id)}, {'$set': {'prompt': prompt}})
+        return JsonResponse({'status': 'success'})
+    except pymongo.errors.PyMongoError as e:
+        return JsonResponse({'status': 'error', 'message': 'Database error.'}, status=500)

@@ -9,4 +9,6 @@ urlpatterns = [
     path('modules/<str:study_id>', views.setModules),
     path('test/<str:study_id>/<str:test>', views.setTest),
     path('test/<str:study_id>', views.getTest),
+    path('modules/<str:study_id>', views.getModules),
+    path('filters/<str:study_id>', views.getFilters),
 ]
