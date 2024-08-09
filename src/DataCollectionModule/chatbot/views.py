@@ -177,45 +177,50 @@ def communicate(request):
         JsonResponse: This function returns a JSON response with the chatbot response, and the url or file path if the response has one.
     """
     if request.method == 'POST':
-        #Get prompt and index from request
-        prompt = request.POST.get('prompt')
-        index = request.POST.get('hash')
-        
-        if index is None or prompt is None:
-            return JsonResponse({'error': 'Index or prompt not provided'})
-        
-        #Send message to chatbot
-        response = (chats[int(index)]).send_message(prompt)
-        answer = (response.text).replace("\n", "")
-        
-        #Get url and file path from question, if they exist
-        url = None
-        pic = None
-        urls = urlMap[int(index)]
-        pics = picMap[int(index)]
-        
-        if len(urls) > 0:
-            for element in urls:
-                if element["question"] == answer:
-                    url = element["url"]
-                    print(url)
-                    break
-                
-        if len(pics) > 0:
-            for element in pics:
-                if element["question"] == answer:
-                    pic = element["file_path"]
-                    print(pic)
-                    break
+        try:
+            #Get prompt and index from request
+            prompt = request.POST.get('prompt')
+            index = request.POST.get('hash')
             
-        #Return response with url or file path
-        if url is not None and pic is not None:
-            return JsonResponse({'response': answer, 'url': url, 'file_path': pic})
-        if url is not None:
-            return JsonResponse({'response': answer, 'url': url})
-        if pic is not None:
-            return JsonResponse({'response': answer, 'file_path': pic})  
-        return JsonResponse({'response': answer})
+            if index is None or prompt is None:
+                return JsonResponse({'error': 'Index or prompt not provided'})
+            
+            #Send message to chatbot
+            response = (chats[int(index)]).send_message(prompt)
+            answer = (response.text).replace("\n", "")
+            
+            #Get url and file path from question, if they exist
+            url = None
+            pic = None
+            urls = urlMap[int(index)]
+            pics = picMap[int(index)]
+            
+            if len(urls) > 0:
+                for element in urls:
+                    if element["question"] == answer:
+                        url = element["url"]
+                        print(url)
+                        break
+                    
+            if len(pics) > 0:
+                for element in pics:
+                    if element["question"] == answer:
+                        pic = element["file_path"]
+                        print(pic)
+                        break
+                
+            #Return response with url or file path
+            if url is not None and pic is not None:
+                return JsonResponse({'response': answer, 'url': url, 'file_path': pic})
+            if url is not None:
+                return JsonResponse({'response': answer, 'url': url})
+            if pic is not None:
+                return JsonResponse({'response': answer, 'file_path': pic})  
+            return JsonResponse({'response': answer})
+        except Exception as e:
+            print('Unknown Error: ')
+            print(e)
+            return JsonResponse({'error': 'Unknown Error'})
     return JsonResponse({'error': 'Invalid request method'})
 
 @csrf_exempt #ahorita no sirve
