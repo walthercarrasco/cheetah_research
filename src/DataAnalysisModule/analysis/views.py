@@ -43,7 +43,7 @@ def getAnalysis(request, study_id):
         if modules is None:
             return JsonResponse({'status': 'error', 'message': 'Study has no modules.'}, status=400)
         if module not in modules:
-            return JsonResponse({'status': 'error', 'message': 'Module not found in study.'}, status=404)
+            return HttpResponse('Module not available')
         obj = None
         if(module == 'user_personas'):
             obj = s3.get_object(Bucket='cheetahresearchlogs ', Key=f"analysis/{study_id}/user_personas/{filter}.md")
