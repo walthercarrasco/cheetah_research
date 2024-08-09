@@ -66,12 +66,12 @@ def start(request):
         questionWithPic = []
         allQuestions = []
         for question in questions:
-            allQuestions.append(question["question"])
+            allQuestions.append('\u200B'+question["question"])
             
             if "feedback_questions" in question:
                 selected_questions.append(
                     {
-                        "question": question["question"],
+                        "question": '\u200B'+question["question"],
                         "feedback_questions": [fb_question for fb_question in question["feedback_questions"]],
                         "weight": question["weight"]
                     }
@@ -79,7 +79,7 @@ def start(request):
             else:
                 selected_questions.append(
                     {
-                        "question": question["question"],
+                        "question": '\u200B' + question["question"],
                         "weight": question["weight"]
                     }
                 )
@@ -87,7 +87,7 @@ def start(request):
             if "file_path" in question:
                 questionWithPic.append(
                     {
-                        "question": question["question"],
+                        "question": '\u200B' + question["question"],
                         "file_path": question["file_path"]
                     }
                 )
@@ -95,7 +95,7 @@ def start(request):
             if "url" in question:
                 questionsWithUrl.append(
                     {
-                        "question": question["question"],
+                        "question": '\u200B' + question["question"],
                         "url": question["url"]
                     }
                 )
@@ -247,6 +247,7 @@ def logs(request):
         try:
             study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
         except Exception as e:
+            print(e)
             return JsonResponse({'error': 'Failed to access database'})
         if study is None:
             return JsonResponse({'error': 'Study not found'})
@@ -268,23 +269,22 @@ def logs(request):
         line = ''
         
         #Get chat history
-        for message in history:
-            if message.role == 'user':
-                line += message.parts[0].text
-            if message.role == 'model':
-                count = 0
-                temp = (message.parts[0].text).replace("\n", "").replace("\r", "").lower()
-                for question in currentQuestions:
-                    str = question.lower()
-                    if str in temp or "listo" in temp:
+        try:
+            for message in history:
+                if message.role == 'user':
+                    line += message.parts[0].text
+                if message.role == 'model':
+                    temp = (message.parts[0].text).replace("\n", "").replace("\r", "").lower()
+                    if '\u200B' in temp:
                         data.append(line)
                         line = ''
                         break
                     else:
-                        count += 1
-                
-                if count == len(currentQuestions):
-                    line += ', '
+                        line += ', '
+        except Exception as e:
+            print('Failed to get chat history: ')
+            print(e)
+            return JsonResponse({'error': 'Failed to get chat history'})
 
         #Save log in csv file
         csv_key = f"surveys/{study_id}/log_{study_id}.csv"
@@ -293,6 +293,7 @@ def logs(request):
             try:
                 csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
             except Exception as e:
+                print(e)
                 return JsonResponse({'error': e})
             
             csv_body = csv_obj['Body'].read()
@@ -315,10 +316,14 @@ def logs(request):
             try:
                 df.to_csv(csv_buffer, index=False)
             except Exception as e:
+                print('Failed to save csv file: ')
+                print(e)
                 return JsonResponse({'error': 'Failed to save csv file'})
             try:
                 s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
             except Exception as e:
+                print('Failed to put csv file in S3: ')
+                print(e)
                 return JsonResponse({'error': 'Failed to put csv file in S3: ' + e})
         else:
             # The file does not exist, so create it  
@@ -330,6 +335,8 @@ def logs(request):
                 for question in currentQuestions:
                     columns.append(question)
             except Exception as e:
+                print('Failed to create columns: ')
+                print(e)
                 return JsonResponse({'error': 'Failed to create columns'})
             
             df = pd.DataFrame([data],columns=columns)
@@ -338,11 +345,15 @@ def logs(request):
                 csv_buffer = StringIO()
                 df.to_csv(csv_buffer, index=False)
             except Exception as e:
+                print('Failed to save new csv file: ')
+                print(e)
                 return JsonResponse({'error': 'Failed to save new csv file'})
             
             try:
                 s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
             except Exception as e:
+                print('Failed to put new csv file in S3: ')
+                print(e)
                 return JsonResponse({'error': 'Failed to put new csv file in S3: '+e})
             #if the study is a test, tag the file to be deleted in 3 days
             if study['test']==True:
