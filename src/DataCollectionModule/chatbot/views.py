@@ -387,7 +387,7 @@ def logs(request):
         except Exception as e:
             print('Unknown Error: ')
             print(e)
-            return JsonResponse({'error': 'Unknown Error'})  
+            return JsonResponse({'error': 'Unknown Error+'e})  
     return JsonResponse({'error': 'Invalid request method'})
 
 def object_exists(bucket_name, object_key):
