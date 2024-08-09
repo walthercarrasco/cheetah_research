@@ -220,7 +220,7 @@ def communicate(request):
         except Exception as e:
             print('Unknown Error: ')
             print(e)
-            return JsonResponse({'error': 'Unknown Error+' e})
+            return JsonResponse({'error': 'Unknown Error' + e})
     return JsonResponse({'error': 'Invalid request method'})
 
 @csrf_exempt #ahorita no sirve
@@ -387,7 +387,7 @@ def logs(request):
         except Exception as e:
             print('Unknown Error: ')
             print(e)
-            return JsonResponse({'error': 'Unknown Error+'e})  
+            return JsonResponse({'error': 'Unknown Erro+'+e})  
     return JsonResponse({'error': 'Invalid request method'})
 
 def object_exists(bucket_name, object_key):
