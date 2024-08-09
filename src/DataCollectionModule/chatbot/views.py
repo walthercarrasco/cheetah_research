@@ -105,7 +105,7 @@ def start(request):
         json_data = json.dumps(selected_questions, indent=4)
 
         chat = model.start_chat(history=[])
-        response = chat.send_message(prompt + "Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
+        response = chat.send_message("Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
                           + json_data 
                           + "\nSos un encuestador con personalidad " +tone+ ". A partir de las preguntas recolecta información. Si una pregunta principal tiene "
                           + "\"feedback_questions\" vas a preguntar individualmente, una por una cada pregunta de seguimiento "
