@@ -220,7 +220,7 @@ def communicate(request):
         except Exception as e:
             print('Unknown Error: ')
             print(e)
-            return JsonResponse({'error': 'Unknown Error'})
+            return JsonResponse({'error': 'Unknown Error+' e})
     return JsonResponse({'error': 'Invalid request method'})
 
 @csrf_exempt #ahorita no sirve
