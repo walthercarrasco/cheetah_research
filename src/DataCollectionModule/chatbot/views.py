@@ -237,6 +237,7 @@ def logs(request):
     if request.method == 'POST':
         try:
             try:
+                print('Request: ')  
             #Get study_id and index from request
                 study_id = request.POST['study_id']
                 index = request.POST['hash']
@@ -251,6 +252,7 @@ def logs(request):
             
             #Get study from database
             try:
+                print('get study: ')
                 study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
             except Exception as e:
                 print(e)
@@ -263,7 +265,7 @@ def logs(request):
             currentQuestions = questionsForHistory[int(index)]
             history = currentChat.history
             history = history[4:]
-            
+            print('History: ')
             
             #Save log in csv file
             data = []
@@ -274,6 +276,7 @@ def logs(request):
             data.append((datetime.now()-startTimes[int(index)]))
             line = ''
             
+            print('Get chat history: ')
             #Get chat history
             try:
                 #Get chat history
@@ -298,26 +301,31 @@ def logs(request):
                 print('Failed to get chat history: ')
                 print(e)
                 return JsonResponse({'error': 'Failed to get chat history'})
-
+            
+            print('Save log in csv file: ')    
             #Save log in csv file
             csv_key = f"surveys/{study_id}/log_{study_id}.csv"
             if(object_exists(bucket_name, csv_key)):
                 # Get the file from S3, if it exists
                 try:
+                    print('Get file from S3: ')
                     csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
                 except Exception as e:
                     print(e)
                     return JsonResponse({'error': e})
                 
+                print('Read csv file: ')
                 csv_body = csv_obj['Body'].read()
                 resultEncoding = chardet.detect(csv_body)
                 csv = csv_body.decode(resultEncoding['encoding'])
                 df = pd.read_csv(StringIO(csv))
                 
                 # Create a new row with the new data
+                print('Create new row: ')
                 new_df = pd.DataFrame([data],columns=df.columns) 
                 
                 # Append the new row to the DataFrame
+                print('Append new row to DataFrame: ')
                 df = pd.concat([df, new_df], ignore_index=True)
                 
                 # if the file has enough responses, update the last_update field in the survey_logs collection
@@ -325,6 +333,7 @@ def logs(request):
                     db['survey_logs'].update_one({'_id': ObjectId(study_id)}, {'$set': {'last_update': datetime.now()}}, upsert=True)
 
                 # Save the updated DataFrame to S3
+                print('Save updated DataFrame to S3: ')
                 csv_buffer = StringIO()
                 try:
                     df.to_csv(csv_buffer, index=False)
@@ -398,7 +407,6 @@ def logs(request):
     return JsonResponse({'error': 'Invalid request method'})
 
 def object_exists(bucket_name, object_key):
-    s3 = boto3.client('s3')
     try:
         s3.head_object(Bucket=bucket_name, Key=object_key)
         return True
