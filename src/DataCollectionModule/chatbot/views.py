@@ -66,12 +66,12 @@ def start(request):
         questionWithPic = []
         allQuestions = []
         for question in questions:
-            allQuestions.append('\u200B'+question["question"])
+            allQuestions.append(question["question"])
             
             if "feedback_questions" in question:
                 selected_questions.append(
                     {
-                        "question": '\u200B'+question["question"],
+                        "question": question["question"],
                         "feedback_questions": [fb_question for fb_question in question["feedback_questions"]],
                         "weight": question["weight"]
                     }
@@ -79,7 +79,7 @@ def start(request):
             else:
                 selected_questions.append(
                     {
-                        "question": '\u200B' + question["question"],
+                        "question": question["question"],
                         "weight": question["weight"]
                     }
                 )
@@ -87,7 +87,7 @@ def start(request):
             if "file_path" in question:
                 questionWithPic.append(
                     {
-                        "question": '\u200B' + question["question"],
+                        "question": question["question"],
                         "file_path": question["file_path"]
                     }
                 )
@@ -95,7 +95,7 @@ def start(request):
             if "url" in question:
                 questionsWithUrl.append(
                     {
-                        "question": '\u200B' + question["question"],
+                        "question": question["question"],
                         "url": question["url"]
                     }
                 )
