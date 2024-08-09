@@ -276,16 +276,23 @@ def logs(request):
             
             #Get chat history
             try:
+                #Get chat history
                 for message in history:
                     if message.role == 'user':
                         line += message.parts[0].text
                     if message.role == 'model':
+                        count = 0
                         temp = (message.parts[0].text).replace("\n", "").replace("\r", "").lower()
-                        if '\u200B' in temp:
-                            data.append(line)
-                            line = ''
-                            break
-                        else:
+                        for question in currentQuestions:
+                            str = question.lower()
+                            if str in temp or "listo" in temp:
+                                data.append(line)
+                                line = ''
+                                break
+                            else:
+                                count += 1
+                        
+                        if count == len(currentQuestions):
                             line += ', '
             except Exception as e:
                 print('Failed to get chat history: ')
