@@ -231,154 +231,158 @@ def logs(request):
     
     if request.method == 'POST':
         try:
-        #Get study_id and index from request
-            study_id = request.POST['study_id']
-            index = request.POST['hash']
-        except Exception as e:
-            return JsonResponse({'error': 'No study_id or index provided'})
-        #Check if study_id and index are provided
-        if study_id is None:
-            return JsonResponse({'error': 'Study ID not provided'})
-        
-        if index is None:
-            return JsonResponse({'error': 'Index not provided'})
-        
-        #Get study from database
-        try:
-            study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
-        except Exception as e:
-            print(e)
-            return JsonResponse({'error': 'Failed to access database'})
-        if study is None:
-            return JsonResponse({'error': 'Study not found'})
-        
-        #Get chat instance,  questions for history, and start time
-        currentChat = chats[int(index)]
-        currentQuestions = questionsForHistory[int(index)]
-        history = currentChat.history
-        history = history[4:]
-        
-        
-        #Save log in csv file
-        data = []
-        data.append(index)
-        
-        #Get start time and time taken
-        data.append(startTimes[int(index)])
-        data.append((datetime.now()-startTimes[int(index)]))
-        line = ''
-        
-        #Get chat history
-        try:
-            for message in history:
-                if message.role == 'user':
-                    line += message.parts[0].text
-                if message.role == 'model':
-                    temp = (message.parts[0].text).replace("\n", "").replace("\r", "").lower()
-                    if '\u200B' in temp:
-                        data.append(line)
-                        line = ''
-                        break
-                    else:
-                        line += ', '
-        except Exception as e:
-            print('Failed to get chat history: ')
-            print(e)
-            return JsonResponse({'error': 'Failed to get chat history'})
+            try:
+            #Get study_id and index from request
+                study_id = request.POST['study_id']
+                index = request.POST['hash']
+            except Exception as e:
+                return JsonResponse({'error': 'No study_id or index provided'})
+            #Check if study_id and index are provided
+            if study_id is None:
+                return JsonResponse({'error': 'Study ID not provided'})
+            
+            if index is None:
+                return JsonResponse({'error': 'Index not provided'})
+            
+            #Get study from database
+            try:
+                study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
+            except Exception as e:
+                print(e)
+                return JsonResponse({'error': 'Failed to access database'})
+            if study is None:
+                return JsonResponse({'error': 'Study not found'})
+            
+            #Get chat instance,  questions for history, and start time
+            currentChat = chats[int(index)]
+            currentQuestions = questionsForHistory[int(index)]
+            history = currentChat.history
+            history = history[4:]
+            
+            
+            #Save log in csv file
+            data = []
+            data.append(index)
+            
+            #Get start time and time taken
+            data.append(startTimes[int(index)])
+            data.append((datetime.now()-startTimes[int(index)]))
+            line = ''
+            
+            #Get chat history
+            try:
+                for message in history:
+                    if message.role == 'user':
+                        line += message.parts[0].text
+                    if message.role == 'model':
+                        temp = (message.parts[0].text).replace("\n", "").replace("\r", "").lower()
+                        if '\u200B' in temp:
+                            data.append(line)
+                            line = ''
+                            break
+                        else:
+                            line += ', '
+            except Exception as e:
+                print('Failed to get chat history: ')
+                print(e)
+                return JsonResponse({'error': 'Failed to get chat history'})
 
-        #Save log in csv file
-        csv_key = f"surveys/{study_id}/log_{study_id}.csv"
-        if(object_exists(bucket_name, csv_key)):
-            # Get the file from S3, if it exists
-            try:
-                csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
-            except Exception as e:
-                print(e)
-                return JsonResponse({'error': e})
-            
-            csv_body = csv_obj['Body'].read()
-            resultEncoding = chardet.detect(csv_body)
-            csv = csv_body.decode(resultEncoding['encoding'])
-            df = pd.read_csv(StringIO(csv))
-            
-            # Create a new row with the new data
-            new_df = pd.DataFrame([data],columns=df.columns) 
-            
-            # Append the new row to the DataFrame
-            df = pd.concat([df, new_df], ignore_index=True)
-            
-            # if the file has enough responses, update the last_update field in the survey_logs collection
-            if df.size > 19:
-                db['survey_logs'].update_one({'_id': ObjectId(study_id)}, {'$set': {'last_update': datetime.now()}}, upsert=True)
+            #Save log in csv file
+            csv_key = f"surveys/{study_id}/log_{study_id}.csv"
+            if(object_exists(bucket_name, csv_key)):
+                # Get the file from S3, if it exists
+                try:
+                    csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
+                except Exception as e:
+                    print(e)
+                    return JsonResponse({'error': e})
+                
+                csv_body = csv_obj['Body'].read()
+                resultEncoding = chardet.detect(csv_body)
+                csv = csv_body.decode(resultEncoding['encoding'])
+                df = pd.read_csv(StringIO(csv))
+                
+                # Create a new row with the new data
+                new_df = pd.DataFrame([data],columns=df.columns) 
+                
+                # Append the new row to the DataFrame
+                df = pd.concat([df, new_df], ignore_index=True)
+                
+                # if the file has enough responses, update the last_update field in the survey_logs collection
+                if df.size > 19:
+                    db['survey_logs'].update_one({'_id': ObjectId(study_id)}, {'$set': {'last_update': datetime.now()}}, upsert=True)
 
-            # Save the updated DataFrame to S3
-            csv_buffer = StringIO()
-            try:
-                df.to_csv(csv_buffer, index=False)
-            except Exception as e:
-                print('Failed to save csv file: ')
-                print(e)
-                return JsonResponse({'error': 'Failed to save csv file'})
-            try:
-                s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
-            except Exception as e:
-                print('Failed to put csv file in S3: ')
-                print(e)
-                return JsonResponse({'error': 'Failed to put csv file in S3: ' + e})
-        else:
-            # The file does not exist, so create it  
-            try:
-                columns = []
-                columns.append('index')
-                columns.append('start_time')
-                columns.append('time_taken')
-                for question in currentQuestions:
-                    columns.append(question)
-            except Exception as e:
-                print('Failed to create columns: ')
-                print(e)
-                return JsonResponse({'error': 'Failed to create columns'})
-            
-            df = pd.DataFrame([data],columns=columns)
-            
-            try:
+                # Save the updated DataFrame to S3
                 csv_buffer = StringIO()
-                df.to_csv(csv_buffer, index=False)
-            except Exception as e:
-                print('Failed to save new csv file: ')
-                print(e)
-                return JsonResponse({'error': 'Failed to save new csv file'})
+                try:
+                    df.to_csv(csv_buffer, index=False)
+                except Exception as e:
+                    print('Failed to save csv file: ')
+                    print(e)
+                    return JsonResponse({'error': 'Failed to save csv file'})
+                try:
+                    s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
+                except Exception as e:
+                    print('Failed to put csv file in S3: ')
+                    print(e)
+                    return JsonResponse({'error': 'Failed to put csv file in S3: ' + e})
+            else:
+                # The file does not exist, so create it  
+                try:
+                    columns = []
+                    columns.append('index')
+                    columns.append('start_time')
+                    columns.append('time_taken')
+                    for question in currentQuestions:
+                        columns.append(question)
+                except Exception as e:
+                    print('Failed to create columns: ')
+                    print(e)
+                    return JsonResponse({'error': 'Failed to create columns'})
+                
+                df = pd.DataFrame([data],columns=columns)
+                
+                try:
+                    csv_buffer = StringIO()
+                    df.to_csv(csv_buffer, index=False)
+                except Exception as e:
+                    print('Failed to save new csv file: ')
+                    print(e)
+                    return JsonResponse({'error': 'Failed to save new csv file'})
+                
+                try:
+                    s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
+                except Exception as e:
+                    print('Failed to put new csv file in S3: ')
+                    print(e)
+                    return JsonResponse({'error': 'Failed to put new csv file in S3: '+e})
+                #if the study is a test, tag the file to be deleted in 3 days
+                if study['test']==True:
+                    s3.put_object_tagging(
+                        Bucket=bucket_name,
+                        Key=csv_key,
+                        Tagging={
+                            'TagSet': [
+                                {
+                                    'Key': 'DeleteAfter',
+                                    'Value': '3days'
+                                }
+                            ]
+                        }
+                    )
             
-            try:
-                s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
-            except Exception as e:
-                print('Failed to put new csv file in S3: ')
-                print(e)
-                return JsonResponse({'error': 'Failed to put new csv file in S3: '+e})
-            #if the study is a test, tag the file to be deleted in 3 days
-            if study['test']==True:
-                s3.put_object_tagging(
-                    Bucket=bucket_name,
-                    Key=csv_key,
-                    Tagging={
-                        'TagSet': [
-                            {
-                                'Key': 'DeleteAfter',
-                                'Value': '3days'
-                            }
-                        ]
-                    }
-                )
-        
-        #Delete chat instance, questions with pictures, questions with urls, questions for history and start time from dictionaries
-        chats.pop(int(index))
-        urlMap.pop(int(index))
-        picMap.pop(int(index))
-        startTimes.pop(int(index))
-        questionsForHistory.pop(int(index))
-        
-        return JsonResponse({'response': 'Log saved'})  
-        
+            #Delete chat instance, questions with pictures, questions with urls, questions for history and start time from dictionaries
+            chats.pop(int(index))
+            urlMap.pop(int(index))
+            picMap.pop(int(index))
+            startTimes.pop(int(index))
+            questionsForHistory.pop(int(index))
+            
+            return JsonResponse({'response': 'Log saved'})  
+        except Exception as e:
+            print('Unknown Error: ')
+            print(e)
+            return JsonResponse({'error': 'Unknown Error'})  
     return JsonResponse({'error': 'Invalid request method'})
 
 def object_exists(bucket_name, object_key):
