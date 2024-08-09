@@ -105,7 +105,7 @@ def start(request):
         json_data = json.dumps(selected_questions, indent=4)
 
         chat = model.start_chat(history=[])
-        response = chat.send_message("Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
+        response = chat.send_message(prompt + "Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
                           + json_data 
                           + "\nSos un encuestador con personalidad " +tone+ ". A partir de las preguntas recolecta información. Si una pregunta principal tiene "
                           + "\"feedback_questions\" vas a preguntar individualmente, una por una cada pregunta de seguimiento "
@@ -116,8 +116,8 @@ def start(request):
                           + "o la respuesta es muy blanda o vaga (por ejemplo: \"nada\", \"no se\", \"no estoy seguro\", \"bien\", \"mal\", etc), hace tus propias preguntas de seguimiento " 
                           + "y se inquisitivo hasta tener respuestas satisfactorias. "
                           + "Si la respuesta te brinda suficiente informacion, continua con la siguiente pregunta. Solamente enviaras una pregunta en tus mensajes, "
-                          + "no vas a insinuar respuestas para que el usuario conteste. Comenzaras con la siguiente pregunta, \"Buen dia. Le agradecemos por su tiempo para esta entrevista. ¿Cómo prefiere que me dirija a usted durante la conversación?\"."
-                          + "Te vas a dirijir a la persona entrevistada con el nombre que te de, y empezaras con la primera pregunta de la encuesta. Nunca vas a modificar la estructura de las preguntas."
+                          + "no vas a insinuar respuestas para que el usuario conteste. Comenzaras con la siguiente pregunta, \"Hola, te entrevistaré el día de hoy. Cómo deseas que me dirija hacia ti a lo largo de esta entrevista?\"."
+                          + "Te vas a dirijir a la persona entrevistada con el nombre que te de, y empezaras con la primera pregunta de la encuesta. "
                           + "En cuanto termines la encuesta, escribi 'LISTO' para finalizar la conversación.")
         
         #Send first question to chatbot
@@ -230,10 +230,12 @@ def logs(request):
     """
     
     if request.method == 'POST':
+        try:
         #Get study_id and index from request
-        study_id = request.POST['study_id']
-        index = request.POST['hash']
-        
+            study_id = request.POST['study_id']
+            index = request.POST['hash']
+        except Exception as e:
+            return JsonResponse({'error': 'No study_id or index provided'})
         #Check if study_id and index are provided
         if study_id is None:
             return JsonResponse({'error': 'Study ID not provided'})
@@ -242,7 +244,10 @@ def logs(request):
             return JsonResponse({'error': 'Index not provided'})
         
         #Get study from database
-        study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
+        try:
+            study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
+        except Exception as e:
+            return JsonResponse({'error': 'Failed to access database'})
         if study is None:
             return JsonResponse({'error': 'Study not found'})
         
@@ -285,7 +290,11 @@ def logs(request):
         csv_key = f"surveys/{study_id}/log_{study_id}.csv"
         if(object_exists(bucket_name, csv_key)):
             # Get the file from S3, if it exists
-            csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
+            try:
+                csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
+            except Exception as e:
+                return JsonResponse({'error': e})
+            
             csv_body = csv_obj['Body'].read()
             resultEncoding = chardet.detect(csv_body)
             csv = csv_body.decode(resultEncoding['encoding'])
@@ -303,22 +312,38 @@ def logs(request):
 
             # Save the updated DataFrame to S3
             csv_buffer = StringIO()
-            df.to_csv(csv_buffer, index=False)
-            s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
+            try:
+                df.to_csv(csv_buffer, index=False)
+            except Exception as e:
+                return JsonResponse({'error': 'Failed to save csv file'})
+            try:
+                s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
+            except Exception as e:
+                return JsonResponse({'error': 'Failed to put csv file in S3: ' + e})
         else:
             # The file does not exist, so create it  
-            columns = []
-            columns.append('index')
-            columns.append('start_time')
-            columns.append('time_taken')
-            for question in currentQuestions:
-                columns.append(question)
-
+            try:
+                columns = []
+                columns.append('index')
+                columns.append('start_time')
+                columns.append('time_taken')
+                for question in currentQuestions:
+                    columns.append(question)
+            except Exception as e:
+                return JsonResponse({'error': 'Failed to create columns'})
+            
             df = pd.DataFrame([data],columns=columns)
-            csv_buffer = StringIO()
-            df.to_csv(csv_buffer, index=False)
-            s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
-                
+            
+            try:
+                csv_buffer = StringIO()
+                df.to_csv(csv_buffer, index=False)
+            except Exception as e:
+                return JsonResponse({'error': 'Failed to save new csv file'})
+            
+            try:
+                s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
+            except Exception as e:
+                return JsonResponse({'error': 'Failed to put new csv file in S3: '+e})
             #if the study is a test, tag the file to be deleted in 3 days
             if study['test']==True:
                 s3.put_object_tagging(
