@@ -105,7 +105,7 @@ def start(request):
         json_data = json.dumps(selected_questions, indent=4)
 
         chat = model.start_chat(history=[])
-        response = chat.send_message(prompt + "Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
+        response = chat.send_message("Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
                           + json_data 
                           + "\nSos un encuestador con personalidad " +tone+ ". A partir de las preguntas recolecta información. Si una pregunta principal tiene "
                           + "\"feedback_questions\" vas a preguntar individualmente, una por una cada pregunta de seguimiento "
@@ -117,7 +117,7 @@ def start(request):
                           + "y se inquisitivo hasta tener respuestas satisfactorias. "
                           + "Si la respuesta te brinda suficiente informacion, continua con la siguiente pregunta. Solamente enviaras una pregunta en tus mensajes, "
                           + "no vas a insinuar respuestas para que el usuario conteste. Comenzaras con la siguiente pregunta, \"Buen dia. Le agradecemos por su tiempo para esta entrevista. ¿Cómo prefiere que me dirija a usted durante la conversación?\"."
-                          + "Te vas a dirijir a la persona entrevistada con el nombre que te de, y empezaras con la primera pregunta de la encuesta. "
+                          + "Te vas a dirijir a la persona entrevistada con el nombre que te de, y empezaras con la primera pregunta de la encuesta. Nunca vas a modificar la estructura de las preguntas."
                           + "En cuanto termines la encuesta, escribi 'LISTO' para finalizar la conversación.")
         
         #Send first question to chatbot
