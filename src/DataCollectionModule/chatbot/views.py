@@ -12,6 +12,9 @@ import json
 import pandas as pd
 from io import StringIO
 import chardet
+from rapidfuzz import fuzz,utils
+from google.generativeai.types import HarmCategory, HarmBlockThreshold
+import sys
 
 # Get the settings from the settings.py file
 GEMINI_API_KEY = settings.GEMINI_API_KEY
@@ -105,7 +108,7 @@ def start(request):
         json_data = json.dumps(selected_questions, indent=4)
 
         chat = model.start_chat(history=[])
-        response = chat.send_message("Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
+        response = chat.send_message(prompt + "Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
                           + json_data 
                           + "\nSos un encuestador con personalidad " +tone+ ". A partir de las preguntas recolecta información. Si una pregunta principal tiene "
                           + "\"feedback_questions\" vas a preguntar individualmente, una por una cada pregunta de seguimiento "
@@ -186,8 +189,19 @@ def communicate(request):
                 return JsonResponse({'error': 'Index or prompt not provided'})
             
             #Send message to chatbot
-            response = (chats[int(index)]).send_message(prompt)
-            answer = (response.text).replace("\n", "")
+            try:
+                response = (chats[int(index)]).send_message(prompt,
+                        safety_settings={
+                            HarmCategory.HARM_CATEGORY_HATE_SPEECH: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                            HarmCategory.HARM_CATEGORY_HARASSMENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                            HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
+                            HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
+                        })
+                answer = (response.text).replace("\n", "")
+            except Exception as e:
+                print('Failed to send message to chatbot: ')
+                print(sys.exc_info())
+                return JsonResponse({'error': 'Failed to send message to chatbot'}, status=500)
             
             #Get url and file path from question, if they exist
             url = None
@@ -218,10 +232,9 @@ def communicate(request):
                 return JsonResponse({'response': answer, 'file_path': pic})  
             return JsonResponse({'response': answer})
         except Exception as e:
-            print('Unknown Error: ')
-            print(e)
-            return JsonResponse({'error': 'Unknown Error' + e})
-    return JsonResponse({'error': 'Invalid request method'})
+            print('Unknown Error: ' + sys.exc_info())
+            return JsonResponse({'error': 'Unknown Error'}, status=500)
+    return JsonResponse({'error': 'Invalid request method'},)
 
 @csrf_exempt #ahorita no sirve
 def logs(request):
@@ -237,18 +250,17 @@ def logs(request):
     if request.method == 'POST':
         try:
             try:
-                print('Request: ')  
             #Get study_id and index from request
                 study_id = request.POST['study_id']
                 index = request.POST['hash']
             except Exception as e:
-                return JsonResponse({'error': 'No study_id or index provided'})
+                return JsonResponse({'error': 'No study_id or index provided'}, status=500)
             #Check if study_id and index are provided
             if study_id is None:
-                return JsonResponse({'error': 'Study ID not provided'})
+                return JsonResponse({'error': 'Study ID not provided'}, status=500)
             
             if index is None:
-                return JsonResponse({'error': 'Index not provided'})
+                return JsonResponse({'error': 'Index not provided'}, status=500)
             
             #Get study from database
             try:
@@ -256,9 +268,9 @@ def logs(request):
                 study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
             except Exception as e:
                 print(e)
-                return JsonResponse({'error': 'Failed to access database'})
+                return JsonResponse({'error': 'Failed to access database'}, status=500)
             if study is None:
-                return JsonResponse({'error': 'Study not found'})
+                return JsonResponse({'error': 'Study not found'}, status=500)
             
             #Get chat instance,  questions for history, and start time
             currentChat = chats[int(index)]
@@ -276,10 +288,9 @@ def logs(request):
             data.append((datetime.now()-startTimes[int(index)]))
             line = ''
             
-            print('Get chat history: ')
             #Get chat history
+            print('Get chat history: ')
             try:
-                #Get chat history
                 for message in history:
                     if message.role == 'user':
                         line += message.parts[0].text
@@ -287,33 +298,38 @@ def logs(request):
                         count = 0
                         temp = (message.parts[0].text).replace("\n", "").replace("\r", "").lower()
                         for question in currentQuestions:
-                            str = question.lower()
-                            if str in temp or "listo" in temp:
+                            qlower = question.lower()
+                            accept=fuzz.token_set_ratio(temp, qlower, processor=utils.default_process)
+                            if (accept > 80) or 'listo' in temp:
+                                print(qlower + '=' + str(accept))
                                 data.append(line)
                                 line = ''
                                 break
                             else:
                                 count += 1
-                        
+
                         if count == len(currentQuestions):
                             line += ', '
             except Exception as e:
                 print('Failed to get chat history: ')
-                print(e)
+                print(sys.exc_info())
                 return JsonResponse({'error': 'Failed to get chat history'})
             
-            print('Save log in csv file: ')    
             #Save log in csv file
+            print('Save log in csv file: ')   
             csv_key = f"surveys/{study_id}/log_{study_id}.csv"
+            
             if(object_exists(bucket_name, csv_key)):
                 # Get the file from S3, if it exists
                 try:
                     print('Get file from S3: ')
                     csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
                 except Exception as e:
-                    print(e)
-                    return JsonResponse({'error': e})
+                    print('Failed to get file from S3: ')
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to get file from S3'})
                 
+                # Read the csv file
                 print('Read csv file: ')
                 csv_body = csv_obj['Body'].read()
                 resultEncoding = chardet.detect(csv_body)
@@ -335,18 +351,19 @@ def logs(request):
                 # Save the updated DataFrame to S3
                 print('Save updated DataFrame to S3: ')
                 csv_buffer = StringIO()
+                
                 try:
                     df.to_csv(csv_buffer, index=False)
                 except Exception as e:
                     print('Failed to save csv file: ')
-                    print(e)
+                    print(sys.exc_info())
                     return JsonResponse({'error': 'Failed to save csv file'})
                 try:
                     s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
                 except Exception as e:
                     print('Failed to put csv file in S3: ')
-                    print(e)
-                    return JsonResponse({'error': 'Failed to put csv file in S3: ' + e})
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to put csv file in S3 '})
             else:
                 # The file does not exist, so create it  
                 try:
@@ -358,7 +375,7 @@ def logs(request):
                         columns.append(question)
                 except Exception as e:
                     print('Failed to create columns: ')
-                    print(e)
+                    print(sys.exc_info())
                     return JsonResponse({'error': 'Failed to create columns'})
                 
                 df = pd.DataFrame([data],columns=columns)
@@ -368,15 +385,16 @@ def logs(request):
                     df.to_csv(csv_buffer, index=False)
                 except Exception as e:
                     print('Failed to save new csv file: ')
-                    print(e)
+                    print(sys.exc_info())
                     return JsonResponse({'error': 'Failed to save new csv file'})
                 
                 try:
                     s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
                 except Exception as e:
                     print('Failed to put new csv file in S3: ')
-                    print(e)
-                    return JsonResponse({'error': 'Failed to put new csv file in S3: '+e})
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to put new csv file in S3'})
+                
                 #if the study is a test, tag the file to be deleted in 3 days
                 if study['test']==True:
                     s3.put_object_tagging(
@@ -402,8 +420,8 @@ def logs(request):
             return JsonResponse({'response': 'Log saved'})  
         except Exception as e:
             print('Unknown Error: ')
-            print(e)
-            return JsonResponse({'error': 'Unknown Erro+'+e})  
+            print(sys.exc_info())
+            return JsonResponse({'error': 'Unknown Error'})  
     return JsonResponse({'error': 'Invalid request method'})
 
 def object_exists(bucket_name, object_key):
