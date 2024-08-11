@@ -182,7 +182,9 @@ def getFilters(request, study_id):
         survey = db['Surveys'].find_one({'_id': study_oid})
         if survey is None:
             return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
-        return JsonResponse({'status': 'success', 'filters': survey['filters']})
+        if(survey.get('filters') is None):
+            return JsonResponse({'status': 'success', 'filters': []})
+        return JsonResponse({'status': 'success', 'filters': survey.get('filters')})
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
     
@@ -199,6 +201,8 @@ def getModules(request, study_id):
         summary = db['Summaries'].find_one({'_id': study_oid})
         if summary is None:
             return JsonResponse({'status': 'error', 'message': 'Estudio no encontrado.'}, status=404)
-        return JsonResponse({'status': 'success', 'modules': summary['modules']})
+        if summary.get('modules') is None:
+            return JsonResponse({'status': 'success', 'modules': []})
+        return JsonResponse({'status': 'success', 'modules': summary.get('modules')})
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
