@@ -19,7 +19,8 @@ def upload_files(request, study_id):
         return JsonResponse({'error': 'Invalid request method'}, status=405)
     if request.FILES.items() is None:
         return JsonResponse({'error': 'No files provided'}, status=400)
-    if DB['Stduy'].find_one({'_id': ObjectId(study_id)}) is None:
+    study = DB['Study'].find_one({'_id' : ObjectId(study_id)})
+    if study is None:
         return JsonResponse({'error': 'Study not found'}, status=404)
     files = request.FILES.items()
     for key,file in files:
