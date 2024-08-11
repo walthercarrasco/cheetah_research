@@ -54,6 +54,7 @@ def getInterviewer(request):
                     'interviewerProfilePicture': bucket_url + pfp,
                     'interviewerTone': interviewer['interviewerTone'],
                     'interviewerGreeting': interviewer['interviewerGreeting'],
+                    'importantObservation': interviewer['importantObservation'], 
                     '_id': str(interviewer['_id'])
                 })
     return JsonResponse({'error': 'Invalid request method'})
@@ -88,7 +89,9 @@ def updateInterviewer(request):
                 updates['interviewerTone'] = data['interviewerTone']
             if 'interviewerGreeting' in data:
                 updates['interviewerGreeting'] = data['interviewerGreeting']
-            
+            if 'importantObservation' in data:
+                updates['importantObservation'] = data['importantObservation']
+          
             if updates:
                 result = db['Interviewer'].update_one(
                     {'_id': ObjectId(interviewer_id)},
