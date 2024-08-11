@@ -81,7 +81,7 @@ def updateInterviewer(request):
                 s3.delete_object(Bucket = bucket_name, Key=pfp)
                 s3.put_object(Bucket=bucket_name, Key='pfp/'+filename, Body=image_file, ContentType=content_type)
                 s3.put_object_acl(ACL='public-read', Bucket=bucket_name, Key='pfp/'+filename)
-                updates['interviewerProfilePicture'] = 'pfp/'+filename
+                updates['interviewerProfilePicture'] = bucket_url+'pfp/'+filename
                 
             if 'interviewerName' in data:
                 updates['interviewerName'] = data['interviewerName']
