@@ -95,7 +95,7 @@ def updateInterviewer(request):
             if updates:
                 result = db['Interviewer'].update_one(
                     {'_id': ObjectId(interviewer_id)},
-                    {'set': updates}
+                    {'$set': updates}
                 )
                 if result.modified_count > 0:
                     return JsonResponse({'status': 'success', 'message': 'Interviewer updated successfully'})
