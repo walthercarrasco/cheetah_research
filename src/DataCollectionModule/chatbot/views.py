@@ -300,8 +300,8 @@ def logs(request):
                         for question in currentQuestions:
                             qlower = question.lower()
                             accept=fuzz.token_set_ratio(temp, qlower, processor=utils.default_process)
+                            print(qlower + '=' + str(accept))
                             if (accept > 80) or 'listo' in temp:
-                                print(qlower + '=' + str(accept))
                                 data.append(line)
                                 line = ''
                                 break
