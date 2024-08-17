@@ -433,3 +433,24 @@ def object_exists(bucket_name, object_key):
             return False
         else:
             raise e
+    
+@csrf_exempt
+def download_logs(request):
+    if request.method == 'POST':
+        #Get study_id from request
+        try:
+            study_id = request.POST['study_id']
+        except Exception as e:
+            return JsonResponse({'error': 'Study ID not provided'}, status=500)
+        
+        try:
+            response = s3.generate_presigned_url('get_object',
+                                                        Params={'Bucket': bucket_name, 
+                                                                'Key': f"surveys/{study_id}/log_{study_id}.csv"},
+                                                        ExpiresIn=1800)  # URL expiration time in seconds (e.g., 1800 seconds = 30 minutes)
+            return JsonResponse({'url': response})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'error': 'Failed to download logs'}, status=500)
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=500)
