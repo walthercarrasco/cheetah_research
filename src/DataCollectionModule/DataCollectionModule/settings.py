@@ -31,7 +31,7 @@ DEBUG = env.bool('DEBUG')
 
 CORS_ALLOWED_ORIGINS = [
     "https://api.cheetah-research.ai",
-    "https://cheetah-research.ai",
+    "https://www.cheetah-research.ai",
     "http://localhost:8080",
     "http://127.0.0.1:8080",
     "http://172.31.16.5:80",
