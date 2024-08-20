@@ -454,7 +454,8 @@ def download_logs(request):
             return JsonResponse({'error': 'Failed to download logs'}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=500)
-    
+
+@csrf_exempt
 def updateLogs(request):
     if request.method == 'POST':
         try:
