@@ -454,3 +454,26 @@ def download_logs(request):
             return JsonResponse({'error': 'Failed to download logs'}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=500)
+    
+def updateLogs(request):
+    if request.method == 'POST':
+        try:
+            #Get study_id and index from request
+            study_id = request.POST['study_id']
+        except Exception as e:
+            return JsonResponse({'error': 'No study_id or index provided'}, status=500)
+        #Check if study_id and index are provided
+        if study_id is None:
+            return JsonResponse({'error': 'Study ID not provided'}, status=500)
+        
+        #Erase csv file from S3
+        csv_key = f"surveys/{study_id}/log_{study_id}.csv"
+        try:
+            s3.delete_object(Bucket=bucket_name, Key=csv_key)
+        except Exception as e:
+            print('Failed to delete csv file: ')
+            print(sys.exc_info())
+            return JsonResponse({'error': 'Failed to delete csv file'})
+        return JsonResponse({'response': 'Log deleted'})
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=500)
