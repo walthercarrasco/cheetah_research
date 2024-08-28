@@ -211,14 +211,16 @@ def communicate(request):
             
             if len(urls) > 0:
                 for element in urls:
-                    if element["question"] == answer:
+                    accept=fuzz.token_set_ratio(element["question"], answer, processor=utils.default_process)
+                    if accept > 80:
                         url = element["url"]
                         print(url)
                         break
                     
             if len(pics) > 0:
                 for element in pics:
-                    if element["question"] == answer:
+                    accept=fuzz.token_set_ratio(element["question"], answer, processor=utils.default_process)
+                    if accept > 80:
                         pic = element["file_path"]
                         print(pic)
                         break
