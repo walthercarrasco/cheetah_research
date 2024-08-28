@@ -304,10 +304,11 @@ def logs(request):
                         for question in currentQuestions:
                             qlower = question.lower()
                             accept=fuzz.token_set_ratio(temp, qlower, processor=utils.default_process)
-                            print(qlower + '=' + str(accept))
                             if (accept > 80) or 'listo' in temp:
+                                print(str(currentQuestions.index(question)) + qlower + '=' + str(accept))
                                 data.append(line)
                                 line = ''
+                                currentQuestions.remove(question)
                                 break
                             else:
                                 count += 1
@@ -320,7 +321,8 @@ def logs(request):
                 return JsonResponse({'error': 'Failed to get chat history'})
             
             #Save log in csv file
-            print('Save log in csv file: ')   
+            print('Save log in csv file: ') 
+            print(data.count)  
             csv_key = f"surveys/{study_id}/log_{study_id}.csv"
             
             if(object_exists(bucket_name, csv_key)):
