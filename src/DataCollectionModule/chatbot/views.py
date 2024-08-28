@@ -217,6 +217,7 @@ def communicate(request):
                     if accept > 80:
                         url = element["url"]
                         print(url)
+                        urls.remove(element)
                         break
                     
             if len(pics) > 0:
@@ -225,6 +226,7 @@ def communicate(request):
                     if accept > 80:
                         pic = element["file_path"]
                         print(pic)
+                        pics.remove(element)
                         break
                 
             #Return response with url or file path
