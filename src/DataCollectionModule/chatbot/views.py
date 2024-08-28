@@ -113,7 +113,7 @@ def start(request):
                           + "\nSos un encuestador con personalidad " +tone+ ". A partir de las preguntas recolecta información. Si una pregunta principal tiene "
                           + "\"feedback_questions\" vas a hacer cada pregunta de seguimiento individualmente inmediatamente despues de su preugnta principal."
                           + "El \"weight\" de cada pregunta principal indica la importancia a una respuesta adecuada a esa pregunta."
-                          + "Comenzaras con la siguiente pregunta, \"Hola, te entrevistaré el día de hoy. Cómo deseas que me dirija hacia ti a lo largo de esta entrevista?\"."
+                          + "Comenzaras con la siguiente pregunta, sin nada agregado de parte tuya, \"Hola, te entrevistaré el día de hoy. Cómo deseas que me dirija hacia ti a lo largo de esta entrevista?\"."
                           + "Te vas a dirijir a la persona entrevistada con el nombre que te de, y empezaras con la primera pregunta de la encuesta. "
                           + "Cuando hagas una pregunta de la encuesta, vas a enviarlo de la siguiente forma: \"(nombre del entrevistado), (pregunta) \". "
                           + "Las preguntas que yo te proporciono ocupas hacerlas justo como yo te las envie, nunca vas a cambiar su estructura, ni una palabra, ni un caracter, absolutamente nada de mis preguntas vas a poder cambiar"
