@@ -254,6 +254,7 @@ def logs(request):
     """
     
     if request.method == 'POST':
+        logs2(request)
         try:
             try:
             #Get study_id and index from request
@@ -431,6 +432,142 @@ def logs(request):
             print(sys.exc_info())
             return JsonResponse({'error': 'Unknown Error'})  
     return JsonResponse({'error': 'Invalid request method'})
+
+#este lo hace gemini
+def logs2(request):
+    if request.method == 'POST':
+        try:
+            try:
+            #Get study_id and index from request
+                study_id = request.POST['study_id']
+                index = request.POST['hash']
+            except Exception as e:
+                return JsonResponse({'error': 'No study_id or index provided'}, status=500)
+            #Check if study_id and index are provided
+            if study_id is None:
+                return JsonResponse({'error': 'Study ID not provided'}, status=500)
+            
+            if index is None:
+                return JsonResponse({'error': 'Index not provided'}, status=500)
+            
+            #Get study from database
+            try:
+                print('get study: ')
+                study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
+            except Exception as e:
+                print(e)
+                return JsonResponse({'error': 'Failed to access database'}, status=500)
+            if study is None:
+                return JsonResponse({'error': 'Study not found'}, status=500)
+            
+            #Get chat instance,  questions for history, and start time
+            currentChat = chats[int(index)]
+            currentQuestions = questionsForHistory[int(index)]
+            history = currentChat.history
+            history = history[4:]
+            new_history = []
+            questions = []
+            for message in history:
+                new_history.append(
+                    {
+                        'rol': message.role,
+                        'texto': message.parts[0].text
+                    }
+                )
+            for question in currentQuestions:
+                questions.append(
+                    {
+                        'pregunta': question
+                    }
+                )
+                
+            send_questions = json.dumps(questions)
+            send_history = json.dumps(new_history)
+            prompt = """
+                    Tu funcion es extraer las respuestas de un usuario a las preguntas de la encuesta.
+                    Tendras un historial que tiene 'rol' y 'texto' como llaves, 'rol' puede ser 'user' o 'model' y 'texto' es el mensaje.
+                    Tendras una lista que tiene 'pregunta' que son las preguntas principales de una encuesta.
+                    En el historial se encuentran las preguntas hechas por el 'model', algunas estan en la lista de preguntas principales y otras no.
+                    Debes extraer las respuestas de 'user' a las preguntas principales de la lista de preguntas principales.
+                    Si se encuentra una pregunta que no esta en la lista de preguntas principales, debes concatenar la respuesta de 'user' a esa pregunta
+                    con la respuesta de la pregunta principal anterior.
+                    Las preguntas del model no seran identicas a las preguntas de la lista de preguntas principales, pero seran similares. Ocupas identificar
+                    las preguntas del model que corresponden a las preguntas principales.
+                    
+                    Por ejemplo:
+                    Preguntas Principales:
+                    {
+                        "pregunta": "Cual es tu nombre?"
+                        "pregunta": "Cual es tu genero?"
+                        "pregunta": "Cual es tu edad?"
+                    }
+                    
+                    Historial:
+                    {
+                        "rol": "model",
+                        "texto": "Hola, podrias decirme cual es tu nombre?"
+                    },
+                    {
+                        "rol": "user",
+                        "texto": "Juan"
+                    },
+                    {
+                        "rol": "model",
+                        "texto": "Gracias, y cual es tu apellido?"
+                    },
+                    {
+                        "rol": "user",
+                        "texto": "Dominguez"
+                    },
+                    {
+                        "rol": "model",
+                        "texto": "Ahora, cual es tu genero?"
+                    },
+                    {
+                        "rol": "user",
+                        "texto": "Masculino"
+                    }
+                    {
+                        "rol": "model",
+                        "texto": "Cual es tu edad?"
+                    },
+                    {
+                        "rol": "user",
+                        "texto": "20"
+                    },
+                    {
+                        "rol": "model",
+                        "texto": "Cual es tu direccion?"
+                    },
+                    {
+                        "rol": "user",
+                        "texto": "Calle 5"
+                    }
+                    
+                    Extraer respuestas:
+                    "Juan, Dominguez", Masculino, "20, Calle 5"
+                    
+                    Como ves, Juan y Dominguez se concatenan, y 20 y Calle 5 se concatenan, 
+                    porque las preguntas "Cual es tu apellido?" y "Cual es tu genero?" no estan en la lista de preguntas principales, ya que son secundarias.
+                    Se concatenan las respuestas de las preguntas principales con las respuestas de las preguntas secundarias.
+                    Se pueden concatenar varias preguntas secundarias con preguntas principales
+                    
+                    Tu salida seria de la siguiente manera:
+                    "Juan, Dominguez"
+                    Masculino 
+                    "20, Calle 5"
+                    
+                    La cantidad de lineas de tu salida tiene que ser identica a la cantidad de preguntas principales.
+                    No envies mensaje propio, solo envia las respuestas de la manera que te lo pido. Comienza con el siguiente historial y lista de preguntas principales:
+                    
+                    """
+            send = 'Historial: ' + send_history + '\n\nPreguntas Principales: ' + send_questions
+            response = model.generate_content(prompt + send)
+            print(response.text)
+        except Exception as e:
+            print('Failed to get chat history: ')
+            print(sys.exc_info())
+            return JsonResponse({'error': 'Failed to get chat history'})
 
 def object_exists(bucket_name, object_key):
     try:
