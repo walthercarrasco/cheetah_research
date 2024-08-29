@@ -564,7 +564,113 @@ def logs2(request):
                     """
             send = 'Historial: ' + send_history + '\n\nPreguntas Principales: ' + send_questions
             response = model.generate_content(prompt + send)
+            answers = []
+            answers.append(index)
+            
+            #Get start time and time taken
+            answers.append(startTimes[int(index)])
+            answers.append((datetime.now()-startTimes[int(index)]))
+            
+            split = response.text.split('\n')
+            for i in range(len(split)):
+                answers.append(split[i])
+            
             print(response.text)
+            csv_key = f"surveys/{study_id}/log_{study_id}.csv"
+            
+            if(object_exists(bucket_name, csv_key)):
+                # Get the file from S3, if it exists
+                try:
+                    print('Get file from S3: ')
+                    csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
+                except Exception as e:
+                    print('Failed to get file from S3: ')
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to get file from S3'})
+                
+                # Read the csv file
+                print('Read csv file: ')
+                csv_body = csv_obj['Body'].read()
+                resultEncoding = chardet.detect(csv_body)
+                csv = csv_body.decode(resultEncoding['encoding'])
+                df = pd.read_csv(StringIO(csv))
+                
+                # Create a new row with the new data
+                print('Create new row: ')
+                new_df = pd.DataFrame([answers],columns=df.columns) 
+                
+                # Append the new row to the DataFrame
+                print('Append new row to DataFrame: ')
+                df = pd.concat([df, new_df], ignore_index=True)
+                
+                # if the file has enough responses, update the last_update field in the survey_logs collection
+                if df.size > 19:
+                    db['survey_logs'].update_one({'_id': ObjectId(study_id)}, {'$set': {'last_update': datetime.now()}}, upsert=True)
+
+                # Save the updated DataFrame to S3
+                print('Save updated DataFrame to S3: ')
+                csv_buffer = StringIO()
+                
+                try:
+                    df.to_csv(csv_buffer, index=False)
+                except Exception as e:
+                    print('Failed to save csv file: ')
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to save csv file'})
+                try:
+                    s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
+                except Exception as e:
+                    print('Failed to put csv file in S3: ')
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to put csv file in S3 '})
+            else:
+                # The file does not exist, so create it  
+                try:
+                    columns = []
+                    columns.append('index')
+                    columns.append('start_time')
+                    columns.append('time_taken')
+                    for question in currentQuestions:
+                        columns.append(question)
+                except Exception as e:
+                    print('Failed to create columns: ')
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to create columns'})
+                
+                df = pd.DataFrame([answers],columns=columns)
+                
+                try:
+                    csv_buffer = StringIO()
+                    df.to_csv(csv_buffer, index=False)
+                except Exception as e:
+                    print('Failed to save new csv file: ')
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to save new csv file'})
+                
+                try:
+                    s3.put_object(Bucket=bucket_name, Key=csv_key, Body=csv_buffer.getvalue(), ContentType='text/csv')
+                except Exception as e:
+                    print('Failed to put new csv file in S3: ')
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to put new csv file in S3'})
+                
+                #if the study is a test, tag the file to be deleted in 3 days
+                if study['test']==True:
+                    s3.put_object_tagging(
+                        Bucket=bucket_name,
+                        Key=csv_key,
+                        Tagging={
+                            'TagSet': [
+                                {
+                                    'Key': 'DeleteAfter',
+                                    'Value': '3days'
+                                }
+                            ]
+                        }
+                    )
+            
+            #Delete chat instance, questions with pictures, questions with urls, questions for history and start time from dictionaries
+            print('Success')
         except Exception as e:
             print('Failed to get chat history: ')
             print(sys.exc_info())
