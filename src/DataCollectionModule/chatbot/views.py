@@ -310,6 +310,7 @@ def logs(request):
                             if (accept > 80) or 'listo' in temp:
                                 print(str(currentQuestions.index(question)) + qlower + '=' + str(accept))
                                 data.append(line)
+                                print(line)
                                 line = ''
                                 currentQuestions.remove(question)
                                 break
@@ -325,7 +326,7 @@ def logs(request):
             
             #Save log in csv file
             print('Save log in csv file: ') 
-            print(data.count)  
+            print(len(data))  
             csv_key = f"surveys/{study_id}/log_{study_id}.csv"
             
             if(object_exists(bucket_name, csv_key)):
