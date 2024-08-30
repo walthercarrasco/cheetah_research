@@ -281,7 +281,9 @@ def logs(request):
             #Get chat instance,  questions for history, and start time
             currentChat = chats[int(index)]
             currentQuestions = questionsForHistory[int(index)]
-            currentQuestions2 = questionsForHistory[int(index)]
+            currentQuestions2 = []
+            for question in currentQuestions:
+                currentQuestions2.append(question)
             history = currentChat.history
             history = history[4:]
             print('History: ')
