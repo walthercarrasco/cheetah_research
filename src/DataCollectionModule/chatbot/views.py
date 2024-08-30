@@ -282,6 +282,7 @@ def logs(request):
             #Get chat instance,  questions for history, and start time
             currentChat = chats[int(index)]
             currentQuestions = questionsForHistory[int(index)]
+            currentQuestions2 = questionsForHistory[int(index)]
             history = currentChat.history
             history = history[4:]
             print('History: ')
@@ -381,7 +382,7 @@ def logs(request):
                     columns.append('index')
                     columns.append('start_time')
                     columns.append('time_taken')
-                    for question in currentQuestions:
+                    for question in currentQuestions2:
                         columns.append(question)
                 except Exception as e:
                     print('Failed to create columns: ')
@@ -572,8 +573,9 @@ def logs2(request):
             answers.append((datetime.now()-startTimes[int(index)]))
             
             split = response.text.split('\n')
-            for i in range(len(split)):
-                answers.append(split[i])
+            for element in split:
+                if element != '':
+                    answers.append(element)
             
             print(response.text)
             csv_key = f"surveys/{study_id}/log_{study_id}.csv"
