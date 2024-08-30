@@ -431,12 +431,12 @@ def logs(request):
         except Exception as e:
             print('Unknown Error (normal): ')
             print(sys.exc_info())
-            logs2(request)
+            logs2(request,currentQuestions2)
             return JsonResponse({'error': 'Unknown Error'}, status=500) 
     return JsonResponse({'error': 'Invalid request method'})
 
 #este lo hace gemini
-def logs2(request):
+def logs2(request,currentQuestions):
     if request.method == 'POST':
         try:
             try:
@@ -464,7 +464,6 @@ def logs2(request):
             
             #Get chat instance,  questions for history, and start time
             currentChat = chats[int(index)]
-            currentQuestions = questionsForHistory[int(index)]
             history = currentChat.history
             history = history[4:]
             new_history = []
