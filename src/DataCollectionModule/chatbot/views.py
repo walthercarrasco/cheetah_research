@@ -254,7 +254,6 @@ def logs(request):
     """
     
     if request.method == 'POST':
-        logs2(request)
         try:
             try:
             #Get study_id and index from request
@@ -430,9 +429,10 @@ def logs(request):
             
             return JsonResponse({'response': 'Log saved'})  
         except Exception as e:
-            print('Unknown Error: ')
+            print('Unknown Error (normal): ')
             print(sys.exc_info())
-            return JsonResponse({'error': 'Unknown Error'})  
+            logs2(request)
+            return JsonResponse({'error': 'Unknown Error'}, status=500) 
     return JsonResponse({'error': 'Invalid request method'})
 
 #este lo hace gemini
@@ -672,11 +672,15 @@ def logs2(request):
                     )
             
             #Delete chat instance, questions with pictures, questions with urls, questions for history and start time from dictionaries
-            print('Success')
+            chats.pop(int(index))
+            urlMap.pop(int(index))
+            picMap.pop(int(index))
+            startTimes.pop(int(index))
+            questionsForHistory.pop(int(index))
         except Exception as e:
             print('Failed to get chat history: ')
             print(sys.exc_info())
-            return JsonResponse({'error': 'Failed to get chat history'})
+            return JsonResponse({'error': 'Failed to get chat history'}, status=500)
 
 def object_exists(bucket_name, object_key):
     try:
