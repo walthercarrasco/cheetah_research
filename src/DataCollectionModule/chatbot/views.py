@@ -111,53 +111,26 @@ def start(request):
         response = chat.send_message("Este es una encuesta con preguntas, cada pregunta principal \"question\" puede tener \"feedback_questions\"" 
                           + json_data 
                           + "\nSos un encuestador con personalidad " +tone+ ". A partir de las preguntas recolecta información. Si una pregunta principal tiene "
-                          + "\"feedback_questions\" vas a hacer cada pregunta de seguimiento individualmente inmediatamente despues de su preugnta principal."
+                          + "\"feedback_questions\" vas a hacer cada pregunta de seguimiento individualmente inmediatamente despues de su pregunta principal."
                           + "El \"weight\" de cada pregunta principal indica la importancia a una respuesta adecuada a esa pregunta."
                           + "Si una respuesta a las preguntas principales no te brinda la informacion necesaria, " 
                           + "o la respuesta es muy blanda o vaga (por ejemplo: \"nada\", \"no se\", \"no estoy seguro\", \"bien\", \"mal\", etc), realiza pregunas de seguimiento hasa que te quede clara la respuesta " 
                           + "y se inquisitivo hasta tener respuestas satisfactorias. Pregunta acerca del contexto, detalles, ejemplos, o el por qué de la respuesta. "
                           + "Si la respuesta te brinda suficiente informacion, continua con la siguiente pregunta. Solamente enviaras una pregunta en tus mensajes, "
                           + "y nunca vas a insinuar respuestas para que el usuario conteste. " 
+                          + "Cada vez que hagas una pregunta principal, vas a enviarlo de la siguiente forma: \"" + study_id + ": (pregunta principal) \"."
+                          + "Las \"feedback_questions\" y tus propias preguntas de seguimiento las vas a enviar de forma normal, sin el id de la encuesta."
+                          + "Procura tener una conversación fluida y natural, y no te preocupes si no entiendes algo, puedes pedir aclaraciones. "
                           + "Comenzaras con la siguiente pregunta, sin nada agregado de parte tuya, \"Hola, te entrevistaré el día de hoy. Cómo deseas que me dirija hacia ti a lo largo de esta entrevista?\"."
-                          + "Luego te vas a dirijir a la persona entrevistada con el nombre que se te proporcione, y empezaras con la primera pregunta de la encuesta. "
-                          + "En cuanto termines la encuesta, escribi 'LISTO' para finalizar la conversación.")
+                          + "Luego, en cada pregunta tanto principal como de seguimiento, "
+                          + "te vas a dirijir a la persona entrevistada con el nombre que se te proporcione, y empezaras con la primera pregunta de la encuesta. "
+                          + "En cuanto termines la encuesta, escribi solamente 'LISTO' para finalizar la conversación.")
         
         #Send first question to chatbot
         send = {"content":selected_questions,
                 "hash": hash(chat),
-                "response": (response.text).replace("\n", "")}
-        url = None
-        filepath = None
-        first = allQuestions[0]
-        for element in questionWithPic:
-            if element["question"] == first:
-                filepath = element["file_path"]
-                break
-            
-        for element in questionsWithUrl:
-            if element["question"] == first:
-                url = element["url"]
-                break
-            
-        if url is not None and filepath is not None:
-            send = {"content":selected_questions,
-                    "hash": hash(chat),
-                    "response": (response.text).replace("\n", ""),
-                    "url": url,
-                    "file_path": filepath}
-            
-        if url is not None:
-            send = {"content":selected_questions,
-                    "hash": hash(chat),
-                    "response": (response.text).replace("\n", ""),
-                    "url": url}
-            
-        if filepath is not None:
-            send = {"content":selected_questions,
-                    "hash": hash(chat),
-                    "response": (response.text).replace("\n", ""),
-                    "file_path": filepath}
-        
+                "response": (response.text).replace('\n', "")}
+
         #Store chat instance, questions with pictures, questions with urls, questions for history and start time
         chats[hash(chat)]=chat
         picMap[hash(chat)] = questionWithPic
@@ -278,11 +251,8 @@ def logs(request):
             #Get chat instance,  questions for history, and start time
             currentChat = chats[int(index)]
             currentQuestions = questionsForHistory[int(index)]
-            currentQuestions2 = []
-            for question in currentQuestions:
-                currentQuestions2.append(question)
             history = currentChat.history
-            history = history[5:]
+            history = history[4:]
             print('History: ')
             
             #Save log in csv file
@@ -301,23 +271,15 @@ def logs(request):
                     if message.role == 'user':
                         line += message.parts[0].text
                     if message.role == 'model':
-                        count = 0
-                        temp = (message.parts[0].text).replace("\n", "").replace("\r", "").lower()
-                        for question in currentQuestions:
-                            qlower = question.lower()
-                            accept=fuzz.token_set_ratio(temp, qlower, processor=utils.default_process)
-                            if (accept > 80) or 'listo' in temp:
-                                print(str(currentQuestions.index(question)) + qlower + '=' + str(accept))
-                                data.append(line)
-                                print(line)
-                                line = ''
-                                currentQuestions.remove(question)
-                                break
-                            else:
-                                count += 1
-
-                        if count == len(currentQuestions):
-                            line += ', '
+                        if study_id in message.parts[0].text or 'listo' == message.parts[0].text.lower():
+                            data.append(line)
+                            print(line)
+                            print('-----------------')
+                            print(message.parts[0].text)
+                            line = ''
+                        else:
+                            line += ','
+                        
             except Exception as e:
                 print('Failed to get chat history: ')
                 print(sys.exc_info())
@@ -380,7 +342,7 @@ def logs(request):
                     columns.append('index')
                     columns.append('start_time')
                     columns.append('time_taken')
-                    for question in currentQuestions2:
+                    for question in currentQuestions:
                         columns.append(question)
                 except Exception as e:
                     print('Failed to create columns: ')
@@ -430,7 +392,7 @@ def logs(request):
         except Exception as e:
             print('Unknown Error (normal): ')
             print(sys.exc_info())
-            logs2(request,currentQuestions2)
+            logs2(request,currentQuestions)
             return JsonResponse({'error': 'Unknown Error'}, status=500) 
     return JsonResponse({'error': 'Invalid request method'})
 
