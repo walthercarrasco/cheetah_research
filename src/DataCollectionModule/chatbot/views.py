@@ -124,7 +124,7 @@ def start(request):
                           + "Procura tener una conversación fluida y natural, y no te preocupes si no entiendes algo, puedes pedir aclaraciones. "
                           + "Comenzaras con la siguiente pregunta, sin nada agregado de parte tuya, \"Hola, te entrevistaré el día de hoy. Cómo deseas que me dirija hacia ti a lo largo de esta entrevista?\"."
                           + "Luego, en cada pregunta tanto principal como de seguimiento, "
-                          + "te vas a dirijir a la persona entrevistada con el nombre que se te proporcione en todas las preguntas, y empezaras con la primera pregunta de la encuesta. "
+                          + "te vas a dirijir a la persona entrevistada con el nombre que se te proporcione en todas las preguntas principales, y empezaras con la primera pregunta de la encuesta. "
                           + "En cuanto termines la encuesta, escribi solamente 'LISTO' para finalizar la conversación.")
         
         #Send first question to chatbot
