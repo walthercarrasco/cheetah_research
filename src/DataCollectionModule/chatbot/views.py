@@ -130,7 +130,7 @@ def start(request):
         #Send first question to chatbot
         send = {"content":selected_questions,
                 "hash": hash(chat),
-                "response": (response.text).replace(study_id +':', "")}
+                "response": (response.text).replace(study_id +':', "").replace('\n', '')}  
 
         #Store chat instance, questions with pictures, questions with urls, questions for history and start time
         chats[hash(chat)]=chat
@@ -170,7 +170,7 @@ def communicate(request):
                             HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
                             HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
                         })
-                answer = (response.text).replace(study_id +':', "")
+                answer = (response.text).replace(study_id +':', "").replace('\n', '')
             except Exception as e:
                 print('Failed to send message to chatbot: ')
                 print(sys.exc_info())
