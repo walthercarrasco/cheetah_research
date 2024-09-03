@@ -33,6 +33,7 @@ picMap = {} #dictionary to store questions with pictures
 urlMap = {} #dictionary to store questions with urls
 questionsForHistory = {} #dictionary to store all questions
 startTimes = {} #dictionary to store start times of chats
+ids = {}
 
 @csrf_exempt
 def start(request):
@@ -137,7 +138,7 @@ def start(request):
         urlMap[hash(chat)] = questionsWithUrl
         questionsForHistory[hash(chat)] = allQuestions
         startTimes[hash(chat)] = datetime.now()
-
+        ids[hash(chat)] = study_id
         return JsonResponse(send)
     return Response({'error': 'Invalid request method'})
 
@@ -156,7 +157,7 @@ def communicate(request):
             #Get prompt and index from request
             prompt = request.POST.get('prompt')
             index = request.POST.get('hash')
-            
+            study_id = ids[int(index)]
             if index is None or prompt is None:
                 return JsonResponse({'error': 'Index or prompt not provided'})
             
@@ -169,7 +170,7 @@ def communicate(request):
                             HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE,
                             HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT: HarmBlockThreshold.BLOCK_LOW_AND_ABOVE
                         })
-                answer = (response.text).replace("\n", "")
+                answer = (response.text).replace(study_id +':', "")
             except Exception as e:
                 print('Failed to send message to chatbot: ')
                 print(sys.exc_info())
