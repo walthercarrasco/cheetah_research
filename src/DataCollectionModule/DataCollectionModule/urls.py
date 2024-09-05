@@ -16,7 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
-from chatbot.views import communicate, logs, start, download_logs, updateLogs
+from chatbot.views import communicate, logs, start, download_logs, updateLogs, download_logstxt
 from elimprueba.views import elimTest
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,4 +26,5 @@ urlpatterns = [
     path('elimTest/', elimTest),
     path('chatbot/download_logs/', download_logs),
     path('chatbot/updateLogs/', updateLogs),
+    path('chatbot/download_logs_backup/', download_logstxt),
 ]
