@@ -570,7 +570,8 @@ def logs2(request,currentQuestions):
                 except Exception as e:
                     print('Failed to create new row: ')
                     print(sys.exc_info())
-                    return JsonResponse({'error': 'Failed to create new row'})
+                    logstxt(answers, study_id, index)
+                    return JsonResponse({'error': 'Failed to create new row'}, status=501)
                 # if the file has enough responses, update the last_update field in the survey_logs collection
                 if df.size > 10:
                     db['survey_logs'].update_one({'_id': ObjectId(study_id)}, {'$set': {'last_update': datetime.now()}}, upsert=True)
@@ -646,9 +647,10 @@ def logs2(request,currentQuestions):
             print('Log saved GEMINI')
             return JsonResponse({'response': 'Log saved'}, status=200)
         except Exception as e:
-            print('Failed to get chat history: ')
+            print('Failed to get chat history (Gemini): ')
             print(sys.exc_info())
-            return JsonResponse({'error': 'Failed to get chat history'}, status=500)
+            logstxt(answers, study_id, index)
+            return JsonResponse({'error': 'Failed to get chat history'}, status=501)
 
 def object_exists(bucket_name, object_key):
     try:
@@ -702,5 +704,111 @@ def updateLogs(request):
             print(sys.exc_info())
             return JsonResponse({'error': 'Failed to delete csv file'})
         return JsonResponse({'response': 'Log deleted'})
+    else:
+        return JsonResponse({'error': 'Invalid request method'}, status=500)
+    
+
+@csrf_exempt
+def logstxt(data, study_id, index):
+    try:
+        txt_key = f"surveys/{study_id}/log_{study_id}.txt"
+        new_data = ''
+        for element in data:
+            new_data += element + ','
+        if(object_exists(bucket_name, txt_key)):
+            # Get the file from S3, if it exists
+            try:
+                csv_obj = s3.get_object(Bucket=bucket_name, Key=txt_key)
+            except Exception as e:
+                print('Failed to get file from S3: ')
+                print(sys.exc_info())
+                return JsonResponse({'error': 'Failed to get file from S3'})
+                    
+            # Read the csv file
+            txt_body = csv_obj['Body'].read()
+            resultEncoding = chardet.detect(txt_body)
+            txt = txt_body.decode(resultEncoding['encoding'])
+            # Create a new row with the new data
+            try:
+                print('Appending new data to text file: ')
+                updated_txt = txt + '\n' + new_data  # Adjust how you append new_data based on format
+            except Exception as e:
+                print('Failed to append new data: ')
+                print(sys.exc_info())
+                return JsonResponse({'error': 'Failed to append new data'})
+        
+            # Check if the file has enough responses, update the last_update field in the survey_logs collection
+            if updated_txt.count('\n') > 10:  # Example check: more than 10 lines
+                db['survey_logs'].update_one({'_id': ObjectId(study_id)}, {'$set': {'last_update': datetime.now()}}, upsert=True)
+            
+            # Save the updated text file back to S3
+            try:
+                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=updated_txt, ContentType='txt')
+                return JsonResponse({'success': 'Text file updated successfully'})
+            except Exception as e:
+                print('Failed to put text file in S3: ')
+                print(sys.exc_info())
+                return JsonResponse({'error': 'Failed to put text file in S3 '})
+        else:
+            # The file does not exist, so create it
+            
+            study = db['Surveys'].find_one({'_id': ObjectId(study_id)})    
+            try:
+                header = 'index,start_time,time_taken,'
+                for question in questionsForHistory[int(index)]:
+                    header += question + ','
+                header = header[:-1]
+                new_data = header + '\n' + new_data
+                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=new_data, ContentType='text/csv')
+            except Exception as e:
+                print('Failed to put new csv file in S3: ')
+                print(sys.exc_info())
+                return JsonResponse({'error': 'Failed to put new csv file in S3'})
+                
+            #if the study is a test, tag the file to be deleted in 3 days
+            if study['test']==True:
+                s3.put_object_tagging(
+                    Bucket=bucket_name,
+                    Key=txt_key,
+                    Tagging={
+                        'TagSet': [
+                            {
+                                'Key': 'DeleteAfter',
+                                'Value': '3days'
+                            }
+                        ]
+                    }
+                )
+                
+            #Delete chat instance, questions with pictures, questions with urls, questions for history and start time from dictionaries
+            chats.pop(int(index))
+            urlMap.pop(int(index))
+            picMap.pop(int(index))
+            startTimes.pop(int(index))
+            questionsForHistory.pop(int(index))
+            ids.pop(int(index))
+    except Exception as e:
+        print('Unknown Error (txt): ')
+        print(sys.exc_info())
+        return JsonResponse({'error': 'Unknown Error'}, status=502)
+    
+@csrf_exempt
+def download_logstxt(request):
+    if request.method == 'POST':
+        #Get study_id from request
+        try:
+            study_id = request.POST['study_id']
+        except Exception as e:
+            return JsonResponse({'error': 'Study ID not provided'}, status=500)
+        
+        try:
+            response = s3.generate_presigned_url('get_object',
+                                                        Params={'Bucket': bucket_name, 
+                                                                'Key': f"surveys/{study_id}/log_{study_id}.txt"},
+                                                        ExpiresIn=1800)  # URL expiration time in seconds (e.g., 1800 seconds = 30 minutes)
+            return JsonResponse({'url': response})
+        except Exception as e:
+            print(e)
+            return JsonResponse({'error': 'Failed to download logs'}, status=500)
     else:
         return JsonResponse({'error': 'Invalid request method'}, status=500)
