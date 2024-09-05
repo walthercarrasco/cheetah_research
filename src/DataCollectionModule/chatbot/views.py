@@ -281,7 +281,6 @@ def logs(request):
                 for i in range(len(data)):
                     if(i > 3):
                         print(str(i) + ':' + data[i])
-                logstxt(data, study_id, index)
             except Exception as e:
                 print('Failed to get chat history in main method: ')
                 print(sys.exc_info())
