@@ -279,7 +279,8 @@ def logs(request):
                 if(line != ''):
                     data.append(line)
                 for i in range(len(data)):
-                    print(i + ': ' + data[i])
+                    if(i > 3):
+                        print(str(i) + ':' + data[i])
                 logstxt(data, study_id, index)
             except Exception as e:
                 print('Failed to get chat history in main method: ')
@@ -709,7 +710,6 @@ def updateLogs(request):
         return JsonResponse({'error': 'Invalid request method'}, status=500)
     
 
-@csrf_exempt
 def logstxt(data, study_id, index):
     try:
         txt_key = f"surveys/{study_id}/logbackup_{study_id}.txt"
@@ -789,6 +789,7 @@ def logstxt(data, study_id, index):
             startTimes.pop(int(index))
             questionsForHistory.pop(int(index))
             ids.pop(int(index))
+            print('Log saved TXT')
     except Exception as e:
         print('Unknown Error (txt): ')
         print(sys.exc_info())
