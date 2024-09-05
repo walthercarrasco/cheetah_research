@@ -715,7 +715,7 @@ def logstxt(data, study_id, index):
         txt_key = f"surveys/{study_id}/logbackup_{study_id}.txt"
         new_data = ''
         for element in data:
-            new_data += element + ','
+            new_data += str(element) + ','
         if(object_exists(bucket_name, txt_key)):
             # Get the file from S3, if it exists
             try:
