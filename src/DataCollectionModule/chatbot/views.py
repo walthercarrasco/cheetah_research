@@ -804,7 +804,7 @@ def download_logstxt(request):
         try:
             response = s3.generate_presigned_url('get_object',
                                                         Params={'Bucket': bucket_name, 
-                                                                'Key': f"surveys/{study_id}/logbackup__{study_id}.txt"},
+                                                                'Key': f"surveys/{study_id}/logbackup_{study_id}.txt"},
                                                         ExpiresIn=1800)  # URL expiration time in seconds (e.g., 1800 seconds = 30 minutes)
             return JsonResponse({'url': response})
         except Exception as e:
