@@ -241,7 +241,6 @@ def logs(request):
             
             #Get study from database
             try:
-                print('get study: ')
                 study = db['Surveys'].find_one({'_id': ObjectId(study_id)})
             except Exception as e:
                 print(e)
@@ -274,21 +273,20 @@ def logs(request):
                     if message.role == 'model':
                         if study_id in message.parts[0].text:
                             data.append(line)
-                            print(line)
-                            print('-----------------')
-                            print(message.parts[0].text)
                             line = ''
                         else:
                             line += ','
                 if(line != ''):
                     data.append(line)
+                for i in range(len(data)):
+                    print(i + ': ' + data[i])
             except Exception as e:
-                print('Failed to get chat history: ')
+                print('Failed to get chat history in main method: ')
                 print(sys.exc_info())
-                return JsonResponse({'error': 'Failed to get chat history'})
+                logs2(request,currentQuestions)
             
             #Save log in csv file
-            print('Save log in csv file: ') 
+            print('Length Data: ') 
             print(len(data))  
             csv_key = f"surveys/{study_id}/log_{study_id}.csv"
             
@@ -303,7 +301,6 @@ def logs(request):
                     return JsonResponse({'error': 'Failed to get file from S3'})
                 
                 # Read the csv file
-                print('Read csv file: ')
                 csv_body = csv_obj['Body'].read()
                 resultEncoding = chardet.detect(csv_body)
                 csv = csv_body.decode(resultEncoding['encoding'])
@@ -318,7 +315,7 @@ def logs(request):
                 df = pd.concat([df, new_df], ignore_index=True)
                 
                 # if the file has enough responses, update the last_update field in the survey_logs collection
-                if df.size > 19:
+                if df.size > 10:
                     db['survey_logs'].update_one({'_id': ObjectId(study_id)}, {'$set': {'last_update': datetime.now()}}, upsert=True)
 
                 # Save the updated DataFrame to S3
@@ -456,8 +453,8 @@ def logs2(request,currentQuestions):
                     Debes extraer las respuestas de 'user' a las preguntas principales de la lista de preguntas principales.
                     Si se encuentra una pregunta que no esta en la lista de preguntas principales, debes concatenar la respuesta de 'user' a esa pregunta
                     con la respuesta de la pregunta principal anterior.
-                    Las preguntas del model no seran identicas a las preguntas de la lista de preguntas principales, pero seran similares. Ocupas identificar
-                    las preguntas del model que corresponden a las preguntas principales.
+                    Las preguntas del model no seran identicas a las preguntas de la lista de preguntas principales, pero estaran identificados con un id 
+                    que se te proporcionara. Ocupas identificar las preguntas del model que corresponden a las preguntas principales.
                     
                     Por ejemplo:
                     Preguntas Principales:
@@ -526,7 +523,7 @@ def logs2(request,currentQuestions):
                     No envies mensaje propio, solo envia las respuestas de la manera que te lo pido. Comienza con el siguiente historial y lista de preguntas principales:
                     
                     """
-            send = 'Historial: ' + send_history + '\n\nPreguntas Principales: ' + send_questions
+            send = 'Historial: ' + send_history + '\n\nPreguntas Principales: ' + send_questions + '\n\nID: ' + study_id
             response = model.generate_content(prompt + send)
             answers = []
             answers.append(index)
@@ -540,13 +537,16 @@ def logs2(request,currentQuestions):
                 if element != '':
                     answers.append(element)
             
+            for i in range(len(answers)):
+                print(i + ': ' + answers[i])
+            print('Data Size: ')
+            print(len(answers))
             print(response.text)
             csv_key = f"surveys/{study_id}/log_{study_id}.csv"
             
             if(object_exists(bucket_name, csv_key)):
                 # Get the file from S3, if it exists
                 try:
-                    print('Get file from S3: ')
                     csv_obj = s3.get_object(Bucket=bucket_name, Key=csv_key)
                 except Exception as e:
                     print('Failed to get file from S3: ')
@@ -554,26 +554,28 @@ def logs2(request,currentQuestions):
                     return JsonResponse({'error': 'Failed to get file from S3'})
                 
                 # Read the csv file
-                print('Read csv file: ')
                 csv_body = csv_obj['Body'].read()
                 resultEncoding = chardet.detect(csv_body)
                 csv = csv_body.decode(resultEncoding['encoding'])
                 df = pd.read_csv(StringIO(csv))
                 
                 # Create a new row with the new data
-                print('Create new row: ')
-                new_df = pd.DataFrame([answers],columns=df.columns) 
-                
-                # Append the new row to the DataFrame
-                print('Append new row to DataFrame: ')
-                df = pd.concat([df, new_df], ignore_index=True)
-                
+                try:
+                    print('Create new row: ')
+                    new_df = pd.DataFrame([answers],columns=df.columns) 
+                    
+                    # Append the new row to the DataFrame
+                    print('Append new row to DataFrame: ')
+                    df = pd.concat([df, new_df], ignore_index=True)
+                except Exception as e:
+                    print('Failed to create new row: ')
+                    print(sys.exc_info())
+                    return JsonResponse({'error': 'Failed to create new row'})
                 # if the file has enough responses, update the last_update field in the survey_logs collection
-                if df.size > 19:
+                if df.size > 10:
                     db['survey_logs'].update_one({'_id': ObjectId(study_id)}, {'$set': {'last_update': datetime.now()}}, upsert=True)
 
                 # Save the updated DataFrame to S3
-                print('Save updated DataFrame to S3: ')
                 csv_buffer = StringIO()
                 
                 try:
@@ -642,6 +644,7 @@ def logs2(request,currentQuestions):
             questionsForHistory.pop(int(index))
             ids.pop(int(index))
             print('Log saved GEMINI')
+            return JsonResponse({'response': 'Log saved'}, status=200)
         except Exception as e:
             print('Failed to get chat history: ')
             print(sys.exc_info())
