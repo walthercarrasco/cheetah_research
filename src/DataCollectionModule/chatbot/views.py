@@ -712,7 +712,7 @@ def updateLogs(request):
 @csrf_exempt
 def logstxt(data, study_id, index):
     try:
-        txt_key = f"surveys/{study_id}/log_{study_id}.txt"
+        txt_key = f"surveys/{study_id}/logbackup_{study_id}.txt"
         new_data = ''
         for element in data:
             new_data += element + ','
@@ -727,8 +727,7 @@ def logstxt(data, study_id, index):
                     
             # Read the csv file
             txt_body = csv_obj['Body'].read()
-            resultEncoding = chardet.detect(txt_body)
-            txt = txt_body.decode(resultEncoding['encoding'])
+            txt = txt_body.decode('utf-8')
             # Create a new row with the new data
             try:
                 print('Appending new data to text file: ')
@@ -744,7 +743,7 @@ def logstxt(data, study_id, index):
             
             # Save the updated text file back to S3
             try:
-                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=updated_txt, ContentType='text/csv')
+                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=updated_txt.encode('utf-8'), ContentType='text/csv')
                 return JsonResponse({'success': 'Text file updated successfully'})
             except Exception as e:
                 print('Failed to put text file in S3: ')
@@ -760,7 +759,7 @@ def logstxt(data, study_id, index):
                     header += question + ','
                 header = header[:-1]
                 new_data = header + '\n' + new_data
-                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=new_data, ContentType='text/csv')
+                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=new_data.encode('utf-8'), ContentType='text/csv')
             except Exception as e:
                 print('Failed to put new csv file in S3: ')
                 print(sys.exc_info())
@@ -805,7 +804,7 @@ def download_logstxt(request):
         try:
             response = s3.generate_presigned_url('get_object',
                                                         Params={'Bucket': bucket_name, 
-                                                                'Key': f"surveys/{study_id}/log_{study_id}.txt"},
+                                                                'Key': f"surveys/{study_id}/logbackup__{study_id}.txt"},
                                                         ExpiresIn=1800)  # URL expiration time in seconds (e.g., 1800 seconds = 30 minutes)
             return JsonResponse({'url': response})
         except Exception as e:
