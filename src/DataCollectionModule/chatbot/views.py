@@ -280,6 +280,7 @@ def logs(request):
                     data.append(line)
                 for i in range(len(data)):
                     print(i + ': ' + data[i])
+                logstxt(data, study_id, index)
             except Exception as e:
                 print('Failed to get chat history in main method: ')
                 print(sys.exc_info())
@@ -743,7 +744,7 @@ def logstxt(data, study_id, index):
             
             # Save the updated text file back to S3
             try:
-                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=updated_txt, ContentType='txt')
+                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=updated_txt, ContentType='text/csv')
                 return JsonResponse({'success': 'Text file updated successfully'})
             except Exception as e:
                 print('Failed to put text file in S3: ')
