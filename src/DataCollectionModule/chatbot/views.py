@@ -732,6 +732,7 @@ def logstxt(data, study_id, index):
             try:
                 print('Appending new data to text file: ')
                 updated_txt = txt + '\n' + new_data  # Adjust how you append new_data based on format
+                buf = StringIO(updated_txt)
             except Exception as e:
                 print('Failed to append new data: ')
                 print(sys.exc_info())
@@ -743,7 +744,7 @@ def logstxt(data, study_id, index):
             
             # Save the updated text file back to S3
             try:
-                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=updated_txt.encode('utf-8'), ContentType='text/csv')
+                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=buf.getvalue, ContentType='text/csv')
                 return JsonResponse({'success': 'Text file updated successfully'})
             except Exception as e:
                 print('Failed to put text file in S3: ')
@@ -759,7 +760,8 @@ def logstxt(data, study_id, index):
                     header += question + ','
                 header = header[:-1]
                 new_data = header + '\n' + new_data
-                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=new_data.encode('utf-8'), ContentType='text/csv')
+                buf = StringIO(new_data)
+                s3.put_object(Bucket=bucket_name, Key=txt_key, Body=buf.getvalue, ContentType='text/csv')
             except Exception as e:
                 print('Failed to put new csv file in S3: ')
                 print(sys.exc_info())
