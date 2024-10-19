@@ -33,20 +33,17 @@ def saveQuestions(questions, study_id, files):
     for key, value in files:
         path = f"images/{study_id}/{key}.{value.name.split('.')[-1]}"
         questions[int(key) - 1]['file_path'] = path
-        # Crear un hilo para cargar el archivo
-        file_task = threading.Thread(target=upload_file_to_bucket, args=(path, value))
+        # Read file content into memory
+        file_content = value.read()
+        # Create a thread to upload the file content
+        file_task = threading.Thread(target=upload_file_to_bucket, args=(path, file_content, value.content_type))
         file_tasks.append(file_task)
         file_task.start()
-    
-    # Guardar las preguntas en la base de datos
-    db['Surveys'].update_one({'study_id': ObjectId(study_id)}, {'$push': {'questions': {'$each': questions}}})
 
-def upload_file_to_bucket(path, file):
+    # Save the questions to the database
+    db['Surveys'].update_one({'_id': ObjectId(study_id)}, {'$set': {'questions': questions}})
+
+def upload_file_to_bucket(path, file_content, content_type):
     extension = path.split('.')[-1]
-    content_type = {
-        "jpeg": "image/jpeg",
-        "jpg": "image/jpeg",
-        "png": "image/png",
-    }.get(extension, "application/octet-stream")
-    s3.put_object(Bucket=bucket_name, Key=path, Body=file, ContentType=content_type)
+    s3.put_object(Bucket=bucket_name, Key=path, Body=file_content, ContentType=content_type)
     s3.put_object_acl(ACL='public-read', Bucket=bucket_name, Key=path)

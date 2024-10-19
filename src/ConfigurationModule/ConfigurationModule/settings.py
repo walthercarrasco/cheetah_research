@@ -57,6 +57,8 @@ INSTALLED_APPS = [
     'infoStudy',
     'createInterviewer',
     'list_studies',
+    'summaries',
+    'upload_files',
 ]
 SITE_ID = 1
 
@@ -116,6 +118,8 @@ AWS_ACCESS_KEY_ID = env('AWS_ACCESS_KEY_ID')
 AWS_SECRET_ACCESS_KEY = env('AWS_SECRET_ACCESS_KEY')
 BUCKET_URL = env('BUCKET_URL')
 BUCKET_NAME = env('BUCKET_NAME')
+BUCKET_DATA = env('BUCKET_DATA')
+
 
 # Password validation
 # https://docs.djangoproject.com/en/5.0/ref/settings/#auth-password-validators

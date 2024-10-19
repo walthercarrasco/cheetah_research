@@ -9,11 +9,12 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib.sites.shortcuts import get_current_site
 from django.template.loader import render_to_string
 from django.utils.encoding import force_bytes, force_str
+from rest_framework.permissions import IsAdminUser
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.contrib.auth.tokens import default_token_generator
 from anymail.message import AnymailMessage
 
-from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, PasswordResetRequestSerializer, SetPasswordSerializer
+from .serializers import UserSerializer, UserRegisterSerializer, UserLoginSerializer, PasswordResetRequestSerializer, SetPasswordSerializer, UserEmailSerializer, UpdateUserStatusSerializer 
 from .models import User
 
 
@@ -75,12 +76,12 @@ def password_reset_request(request):
             email_template_name = 'password_reset_email.html'
             c = {
                 'email': user.email,
-                'domain': 'localhost:63342/',
-                'site_name': 'Los Pixies',
+                'domain': 'www.cheetah-research.ai/',
+                'site_name': 'Cheetah Research',
                 'uid': urlsafe_base64_encode(force_bytes(user.pk)),
                 'user': user,
                 'token': default_token_generator.make_token(user),
-                'protocol': 'http',
+                'protocol': 'https',
             }
             email_body = render_to_string(email_template_name, c)
             text_content = strip_tags(email_body)
@@ -119,6 +120,31 @@ def password_reset_confirm(request, uidb64=None, token=None):
     return Response({'error': 'The reset password link is no longer valid.'}, status=status.HTTP_400_BAD_REQUEST)
 
 @api_view(['GET'])
+@permission_classes([IsAdminUser])
+def nonactive_user(request):
+    users = User.objects.filter(is_active=False)
+    serializer = UserEmailSerializer(users, many=True)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+@api_view(['POST'])
+@permission_classes([IsAdminUser])
+def activate_user(request):
+    serializer = UpdateUserStatusSerializer(data=request.data)
+
+    if serializer.is_valid():
+        email = serializer.validated_data['email']
+        try:
+            user = User.objects.get(email=email)
+            user.is_active = True
+            user.save()
+            return Response({'status': 'User activated'}, status=status.HTTP_200_OK)
+        except User.DoesNotExist:
+            return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+@api_view(['GET'])
 @permission_classes([IsAuthenticated])
-def home(request):
-    return Response({'message': 'Welcome to the home page!'}, status=status.HTTP_200_OK)
+def check_session(request):
+    if request.user.is_authenticated:
+        return Response({'message': 'You are logged in.'}, status=status.HTTP_200_OK)
+    return Response({'message': 'You are not logged in.'}, status=status.HTTP_401)
