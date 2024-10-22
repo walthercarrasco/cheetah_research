@@ -59,6 +59,7 @@ INSTALLED_APPS = [
     'list_studies',
     'summaries',
     'upload_files',
+    'oneTimePasswordForDataAnalysis',
 ]
 SITE_ID = 1
 

@@ -33,4 +33,5 @@ urlpatterns = [
     path('configuration/', include('summaries.urls'), name='summaries'),
     path('configuration/', include('upload_files.urls'), name='upload_files'),
     path('configuration/', include('deleteStudy.urls'), name='delete'),
+    path('configuration/', include('oneTimePasswordForDataAnalysis.urls'), name='oneTimePasswordForDataAnalysis'),
 ]
