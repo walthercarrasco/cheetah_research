@@ -17,7 +17,7 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path,include
 from createInterviewer.views import createInterviewer, getInterviewer
-from activateLinks.views import activate, deactivate
+from activateLinks.views import activateAnalisis, activateCollection, deactivateAnalisis, deactivateCollection
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,6 +30,8 @@ urlpatterns = [
     path("api-auth/", include("rest_framework.urls")),
     path("api/v1/dj-rest-auth/", include("dj_rest_auth.urls")),
     path('', include('list_studies.urls'), name='list_studies'),
-    path('activate/', activate, name='activate'),
-    path('deactivate/', deactivate, name='deactivate'),
+    path('activateCollection/', activateCollection, name='activateCollection'),
+    path('deactivateCollection/', deactivateCollection, name='deactivateCollection'),
+    path('activateAnalisis/', activateAnalisis, name='activateAnalisis'),
+    path('deactivateAnalisis/', deactivateAnalisis, name='deactivateAnalisis'),
 ]
