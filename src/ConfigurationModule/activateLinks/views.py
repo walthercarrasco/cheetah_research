@@ -8,9 +8,14 @@ db = settings.MONGO_DB
 def activateCollection(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
-        db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'collectionStatus': 1}})
+        study = db['Study'].find_one({'_id': ObjectId(study_id)})
+        status = study['collectionStatus']
+        if(status == 0):
+            db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 1}})
+        if(status == 2):
+            db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 3}})
         return JsonResponse({
-                                'status': 'activated',
+                                'status': 'activated collection module',
                                 'study_id': study_id
                             })
     return JsonResponse({'error': 'Invalid request method'})
@@ -19,9 +24,14 @@ def activateCollection(request):
 def deactivateCollection(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
-        db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'collectionStatus': 0}})
+        study = db['Study'].find_one({'_id': ObjectId(study_id)})
+        status = study['collectionStatus']
+        if(status == 1):
+            db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 0}})
+        if(status == 3):
+            db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 2}})
         return JsonResponse({
-                                'status': 'deactivated',
+                                'status': 'deactivated collection module',
                                 'study_id': study_id
                             })
     return JsonResponse({'error': 'Invalid request method'})
@@ -30,9 +40,14 @@ def deactivateCollection(request):
 def activateAnalisis(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
-        db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 1}})
+        study = db['Study'].find_one({'_id': ObjectId(study_id)})
+        status = study['collectionStatus']
+        if(status == 0):
+            db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 2}})
+        if(status == 1):
+            db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 3}})
         return JsonResponse({
-                                'status': 'activated',
+                                'status': 'activated analisis module',
                                 'study_id': study_id
                             })
     return JsonResponse({'error': 'Invalid request method'})
@@ -41,9 +56,14 @@ def activateAnalisis(request):
 def deactivateAnalisis(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
-        db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 0}})
+        study = db['Study'].find_one({'_id': ObjectId(study_id)})
+        status = study['collectionStatus']
+        if(status == 2):
+            db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 0}})
+        if(status == 3):
+            db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 1}})
         return JsonResponse({
-                                'status': 'deactivated',
+                                'status': 'activated collection module',
                                 'study_id': study_id
                             })
     return JsonResponse({'error': 'Invalid request method'})
