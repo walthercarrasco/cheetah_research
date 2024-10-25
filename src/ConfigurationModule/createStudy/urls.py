@@ -1,7 +1,8 @@
 from django.urls import path
-from .views import create_study
+from . import views
 
 
 urlpatterns = [
-    path('createStudy/', create_study, name='createStudy'),
+    path('createStudy/', views.create_study, name='createStudy'),
+    path('updateStudy/<str:study_id>', views.update_study)
 ]
