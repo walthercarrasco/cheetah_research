@@ -16,6 +16,7 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path,include
+from activateLinks.views import activateAnalisis, activateCollection, deactivateAnalisis, deactivateCollection
 from createInterviewer.views import createInterviewer, getInterviewer, updateInterviewer
 
 urlpatterns = [
@@ -34,4 +35,8 @@ urlpatterns = [
     path('configuration/', include('upload_files.urls'), name='upload_files'),
     path('configuration/', include('deleteStudy.urls'), name='delete'),
     path('configuration/', include('oneTimePasswordForDataAnalysis.urls'), name='oneTimePasswordForDataAnalysis'),
+    path('configuration/activateCollection/', activateCollection, name='activateCollection'),
+    path('configuration/deactivateCollection/', deactivateCollection, name='deactivateCollection'),
+    path('configuration/activateAnalisis/', activateAnalisis, name='activateAnalisis'),
+    path('configuration/deactivateAnalisis/', deactivateAnalisis, name='deactivateAnalisis'),
 ]
