@@ -9,7 +9,7 @@ def activateCollection(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
         study = db['Study'].find_one({'_id': ObjectId(study_id)})
-        status = study['collectionStatus']
+        status = study['studyStatus']
         if(status == 0):
             db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 1}})
         if(status == 2):
@@ -25,7 +25,7 @@ def deactivateCollection(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
         study = db['Study'].find_one({'_id': ObjectId(study_id)})
-        status = study['collectionStatus']
+        status = study['studyStatus']
         if(status == 1):
             db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 0}})
         if(status == 3):
@@ -41,7 +41,7 @@ def activateAnalisis(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
         study = db['Study'].find_one({'_id': ObjectId(study_id)})
-        status = study['collectionStatus']
+        status = study['studyStatus']
         if(status == 0):
             db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 2}})
         if(status == 1):
@@ -57,7 +57,7 @@ def deactivateAnalisis(request):
     if request.method == 'POST':
         study_id = request.POST['study_id']
         study = db['Study'].find_one({'_id': ObjectId(study_id)})
-        status = study['collectionStatus']
+        status = study['studyStatus']
         if(status == 2):
             db['Study'].update_one({'_id': ObjectId(study_id)}, {'$set': {'studyStatus': 0}})
         if(status == 3):
