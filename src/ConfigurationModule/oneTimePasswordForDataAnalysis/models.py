@@ -24,3 +24,7 @@ class OTP(models.Model):
         otp_value = ''.join(secrets.choice(characters) for _ in range(6))
         expiration_time = timezone.now() + timedelta(hours=48)
         return cls.objects.create(otp=otp_value, mongo_studio_id=mongo_studio_id, expires_at=expiration_time)
+
+    @classmethod
+    def get_otp(cls, mongo_studio_id):
+        return cls.objects.filter(mongo_studio_id=mongo_studio_id, used=False).first()
