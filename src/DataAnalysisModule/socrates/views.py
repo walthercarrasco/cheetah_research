@@ -25,6 +25,7 @@ model = genai.GenerativeModel('gemini-1.5-pro-latest')
 
 chats = {}
 genaiFiles = {}
+str_file = ""
 
 @csrf_exempt
 def startS(request):
@@ -91,30 +92,37 @@ def startS(request):
                     file_obj = s3.get_object(Bucket=bucket_name, Key=file_key)
                     if file_obj["ContentType"] == "application/pdf":
                         s3.download_file(bucket_name, file_key, path)
-                        chatFile = genai.upload_file(path)
+                        chatFile = genai.upload_file(path=path, mime_type="application/pdf")
+                        print(chatFile)
                         filesGenai.append(chatFile)
                         res = chat.send_message([chatFile, "Espera al mensaje LISTO, no analices nada aún"])
-                        
-                    if file_obj["ContentType"] == "text/csv":
-                        csv_body = file_obj['Body'].read()
-                        resultEncoding = chardet.detect_all(csv_body)
-                        print(type(resultEncoding))  # This will print the type of resultEncoding
-                        csv_content = None
-                        if isinstance(resultEncoding, dict):
-                            print("resultEncoding is a dictionary")
-                            csv_content = csv_body.decode(resultEncoding['encoding'])
-                        elif isinstance(resultEncoding, list):
-                            print("resultEncoding is a list")
-                            print(resultEncoding)
-                            csv_content = csv_body.decode((resultEncoding[0])['encoding'])
 
-                        with open(path, 'wb') as f:
-                            f.write(csv_content.encode('utf-8'))
-                            chatFile = genai.upload_file(path)
-                            chatFile["mime_type"] = 'text/csv'
-                            print(chatFile)
-                            filesGenai.append(chatFile)
-                            res = chat.send_message([chatFile, "Espera al mensaje LISTO, no analices nada aún"])
+                    try:
+                        if file_obj["ContentType"] == "text/csv":
+                            csv_body = file_obj['Body'].read()
+                            resultEncoding = chardet.detect_all(csv_body)
+                            print(type(resultEncoding))  # This will print the type of resultEncoding
+                            csv_content = None
+                            if isinstance(resultEncoding, dict):
+                                print("resultEncoding is a dictionary")
+                                csv_content = csv_body.decode(resultEncoding['encoding'])
+                            elif isinstance(resultEncoding, list):
+                                print("resultEncoding is a list")
+                                print(resultEncoding)
+                                csv_content = csv_body.decode((resultEncoding[0])['encoding'])
+
+                            with open(path, 'wb') as f:
+                                f.write(csv_content.encode('utf-8'))
+                                chatFile = genai.upload_file(path, mime_type="text/csv")
+                                print(chatFile)
+                                filesGenai.append(chatFile)
+                                res = chat.send_message([chatFile, "Espera al mensaje LISTO, no analices nada aún"])
+                    except Exception as e:
+                        with open(path, 'r') as f:
+                            csv_content = f.read()
+                            contenido = "ARCHIVO CSV: \n\n\n" + csv_content
+                            res = chat.send_message("Espera al mensaje LISTO, no analices nada aún \n\n\n" + contenido)
+
                     if file_obj["ContentType"] == "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":
                         file_content = file_obj['Body'].read()
 
@@ -127,7 +135,7 @@ def startS(request):
                         # Write the DataFrame to a CSV file
                         df.to_csv(path, index=False)
                         
-                        chatFile = genai.upload_file(path)
+                        chatFile = genai.upload_file(path, mime_type="text/csv")
                         filesGenai.append(chatFile)
                         res = chat.send_message([chatFile, "Espera al mensaje LISTO, no analices nada aún"])
                         print(res.text)
