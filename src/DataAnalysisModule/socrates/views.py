@@ -111,6 +111,7 @@ def startS(request):
                         with open(path, 'wb') as f:
                             f.write(csv_content.encode('utf-8'))
                             chatFile = genai.upload_file(path)
+                            chatFile["mime_type"] = 'text/csv'
                             print(chatFile)
                             filesGenai.append(chatFile)
                             res = chat.send_message([chatFile, "Espera al mensaje LISTO, no analices nada aún"])
