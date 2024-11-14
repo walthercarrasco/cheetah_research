@@ -125,7 +125,7 @@ def setModules (request, study_id):
         return JsonResponse({'status': 'error', 'message': 'Invalid JSON format.'}, status=400)    
     
     try:
-        db['Summaries'].insert_one({'_id': study_oid, 'modules': modules})
+        db['Summaries'].insert_one({'_id': study_oid, {'$set': {'modules': modules}})
     except pymongo.errors.PyMongoError as e:
         return JsonResponse({'status': 'error', 'message': 'Error en la base de datos.'}, status=500)
     return JsonResponse({'status': 'success'})
